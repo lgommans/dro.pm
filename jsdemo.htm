@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>t4g.eu shortner</title>
+	</head>
+	<body>
+		<center>
+			<h1 id="action">Press Ctrl + V</h1>
+			<input id="url" onclick="select()" style="width:100px;text-align:center;color:#500;margin-bottom:20px;border:0"><br>
+			<textarea id="toshorten" wrap="off" style="width:300px;height:18px;padding-top:1px;"></textarea>
+		</center>
+		<script>
+			function $(id){ return document.getElementById(id); }
+			$("toshorten").focus();
+			$("toshorten").select();
+			
+			var prevval = $("toshorten").value;
+			
+			$("toshorten").onkeyup =
+			$("toshorten").onmouseup =
+			$("toshorten").onchange = function() {
+				// Does the value suddenly increase a lot in length?
+				if ($("toshorten").value.length > prevval.length + 5) {
+					// Did we paste multiline text?
+					if ($("toshorten").value.indexOf("\n") > -1) {
+						$("toshorten").style.height = "400px";
+					}
+					
+					if ($("toshorten").clientWidth < $("toshorten").scrollWidth) {
+						$("toshorten").style.height = "36px";
+					}
+					
+					$("action").innerHTML = "Working...";
+					setTimeout(function() {
+						$("action").innerHTML = "Press Ctrl + C";
+						$("url").value = "t4g.eu/qb";
+						$("url").style.border = "1px solid black";
+						$("url").focus();
+						$("url").select();
+					}, 450);
+				}
+				prevval = $("toshorten").value;
+			}
+			
+			$("url").onkeyup = function(ev) {
+				if (ev.keyCode == "C".charCodeAt(0)) {
+					$("action").innerHTML = "Copied!";
+				}
+			}
+		</script>
+	</body>
+</html>

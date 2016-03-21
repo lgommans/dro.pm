@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>dro.pm url shortener</title>
+	</head>
+	<body>
+		<div id="topbar">
+			dro.p <span style="color:#bbb">'e</span>m
+			<div class="subtitle">Extremely short links</div>
+		</div>
+		<center>
+			<div id="action" style="font-size: 3em; font-weight: bold;">Loading...</div>
+			<div id="url" style="display:none"></div>
+			<div id="error" style="display:none"></div>
+			<form method="POST" action="nojs.php">
+				<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;"></textarea>
+				<noscript>
+					<input type="submit" value="Shorten!"><br>
+					<br>
+					<font color="red">
+						Note: Javascript is off. This website will not work currently.<br>
+						We are planning a basic no-Javascript version, but it'll take time.<!--This site works much better when<br>
+						Javascript is enabled. There will be no ads or annoying stuff!-->
+					</font>
+				</noscript>
+			</form>
+			<br>
+			<form method="POST" enctype="multipart/form-data" action="nojs.php" id="fileform">
+				Or upload a file: <input type="file" name="f" id="f">
+				<div style="display:none">
+					<input type="submit">
+					<iframe id="fileframe" name="fileframe"></iframe>
+				</div>
+			</form>
+			<div style="margin-top: 40px; color: #fff;" id=info><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a></div>
+			<div><br>
+				New: Upload files from the command line:<br>
+				<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="http://pastebin.com/0u08fBr8">http://pastebin.com/0u08fBr8</a><br>
+			</div>
+		</center>
+		<script>
+// TODO: reAllocate shortcode if t>60s
+// TODO: !javascript
+			function $(id){ return document.getElementById(id); }
+			$("action").innerHTML = "Press Ctrl + V<span style='font-size: 15pt;position:relative;top:-25px;'><br>to paste your link or text</span>";
+			$("toshorten").focus();
+			$("toshorten").select();
+			var url = 'Loading...';
+			var urlShown = false;
+			
+			function shouldIncreaseToShortenHeight() {
+				return $("toshorten").clientWidth < $("toshorten").scrollWidth;
+			}
+			
+			if ($("toshorten").value != "") {
+				if (shouldIncreaseToShortenHeight()) {
+					$("toshorten").style.height = "36px";
+				}
+			}
+						
+			var prevval = "";
+			var hasPasted = false;
+			$("toshorten").value = "";
+
+			$("toshorten").onblur = function() {
+				if ($("toshorten").value.length == 0) {
+					$("action").innerHTML = "Share text, a link or a file<br>&nbsp;"
+				}
+			};
+			
+			$("toshorten").onkeyup =
+			$("toshorten").onmouseup =
+			$("toshorten").onchange = function() {
+				var height = 18;
+				if (shouldIncreaseToShortenHeight()) {
+					height += 18;
+				}
+				
+				// Did we paste multiline text?
+				if ($("toshorten").value.indexOf("\n") > -1) {
+					height += $("toshorten").value.match(/\n/g).length * 18 + 2;
+					height = Math.max(28, Math.min(350, height));
+					$("toshorten").style.width = "600px";
+				}
+				
+				$("toshorten").style.height = height + "px";
+				// Does the value suddenly increase a lot in length?
+				if ($("toshorten").value.length > prevval.length + 10) {
+					hasPasted = true;
+				}
+				else {
+					if ($("toshorten").value.length > 6 && !hasPasted) {
+						showUrl();
+						hasPasted = true;
+					}
+				}
+				if (prevval != $("toshorten").value) {
+					setData($("toshorten").value);
+				}
+				prevval = $("toshorten").value;
+			};
+			
+			$("f").onchange = function() {
+				aGET('api/v1/extend/' + secret + '/1800'); // Reserve the link for 30 minutes so it can upload
+				aGET('api/v1/clear/' + secret);
+				
+				setTimeout(function() {
+					$("fileform").action = "fileman.php?secret=" + secret;
+					$("fileform").target = "fileframe";
+					$("fileform").submit();
+				}, 50);
+				
+				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Uploading...<br>your link will be:";
+				showUrl();
+				
+				t = 400;
+				
+				function checkForUpdate() {
+					aGET('api/v1/check/' + url.replace('dro.pm/', ''), function(data) {
+						if (data == '1') {
+							$("action").innerHTML = "All done!<br>Your short link:";
+						}
+						else {
+							t = Math.min(1750, t + 50);
+							setTimeout(checkForUpdate, t);
+						}
+					});
+				}
+				
+				setTimeout(function() {
+					checkForUpdate();
+				}, 750);
+			};
+
+			function info() {
+				$("info").innerHTML = '<div style="color: #FFB030; font-size: 2em;">Info</div>'
+					+ 'Here you can make very short links that you can share over the phone, tell someone sitting next to you, write on a whiteboard, etc. '
+					+ 'You can upload files, share some text, or share a link.<br>'
+					+ '<br>'
+					+ 'The links are case insensitive (<tt style="font-size: 12pt;">dro.pm/ab</tt> and <tt style="font-size: 12pt;">dro.pm/AB</tt> are the same) and do not include similar '
+					+ 'characters like i and 1 or o and zero.<br>'
+					+ '<br>'
+					+ 'To report illegal stuff (e.g. phishing) or tell me something else, <a style="color: rgb(0, 215, 251);" href="https://twitter.com/lucgommans">send me a tweet</a>.<br>'
+					+ 'Note that links really do expire permanently after 12 hours, so capture any evidence.';
+			}
+			
+			function showUrl() {
+				var html = '<span style="display:inline-block">' + url + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
+					+ '<div class="urlSubtitle">(Works for 12 hours)</div>';
+				if (html != $("url").innerHTML) {
+					$("url").innerHTML = html;
+					console.log("updating html from\n" + $("url").innerHTML + " to\n" + html);
+				}
+				if ($("url").style.display != "block") {
+					$("url").style.display = "block";
+					console.log("updating style");
+				}
+				urlShown = true;
+			}
+			
+			function setUrl(shortcode) {
+				url = "dro.pm/" + shortcode;
+				if (urlShown)
+					showUrl(url);
+			}
+			
+			setInterval($("toshorten").onchange, 250);
+
+			function aPOST(uri, data, callback, errorCallback) {
+				var req = new XMLHttpRequest();
+				req.open("POST", uri, true);
+				req.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+				req.onreadystatechange = function() {
+					if (req.readyState == 4) {
+						if (req.status == 200) {
+							callback(req.responseText);
+						}
+						else {
+							errorCallback(req.responseText);
+						}
+					}
+				};
+				req.send('val=' + encodeURIComponent(data));
+			}
+			
+			function aGET(uri, callback) {
+				var req = new XMLHttpRequest();
+				req.open("GET", uri, true);
+				req.send(null);
+				req.onreadystatechange = function() {
+					if (req.readyState == 4)
+						callback(req.responseText);
+				}
+			}
+			
+			function errorHandler(message) {
+				$("error").style.display = "block";
+				$("error").innerHTML = message;
+			}
+
+			function setData(to) {
+				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Your link will be:";
+				showUrl();
+				aPOST('api/v1/set/' + secret, to, function(data) {
+					if (data == '1') {
+						$("action").innerHTML = "Your short link:";
+					}
+				}, errorHandler);
+			}
+			
+			function allocateURI() {
+				aPOST('api/v1/allocate', '', function(data) {
+					data = eval(data);
+					setUrl(data[1]);
+					secret = data[0];
+				}, errorHandler);
+			}
+			
+			allocateURI();
+		</script>
+		<style>
+			#topbar {
+				width: 100%;
+				color: #FA0;
+				text-align: center;
+				background-color: #313137;
+				font-size: 4em;
+				font-weight: bold;
+				margin: 0;
+				margin-bottom: 60px;
+				padding: 20px 0 30px 0;
+				border: 0;
+				border-bottom: 2px solid #DDD;
+			}
+			#topbar .subtitle {
+				font-size: 0.39em;
+				color: #FFF;
+			}
+			body {
+				font-family: Arial;
+				margin: 0;
+				background: url('res/img/bg.png');
+				color: #FFB030;
+			}
+			#url {
+				text-align: center;
+				color: #FFF;
+				font-size: 4em;
+			}
+			.urlSubtitle {
+				text-align: center;
+				font-size: 1rem;
+				color: #FFF;
+				margin-top: 10px;
+				margin-bottom: 30px;
+			}
+			#error {
+				color: #f00;
+				font-weight: bold;
+			}
+			center {
+				max-width: 610px;
+				margin: 0 auto 0 auto;
+			}
+		</style>
+	</body>
+</html>
