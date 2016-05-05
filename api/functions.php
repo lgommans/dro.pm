@@ -5,20 +5,6 @@
 		return [$secret, $code];
 	}
 
-	function getState() {
-		return;
-		global $state;
-		$state = false;
-		$i = 0;
-		
-		do {
-			$state = @file_get_contents("state.cache");
-			if ($state) {
-				$state = unserialize($state);
-			}
-		} while (!$state && $i++ < 10 && sleep(rand(1,10)/10));
-	}
-	
 	function getAllowedCharset() {
 		$allowedCharSet = 'a-hj-km-z2-9';
 		$chars = array();
@@ -52,7 +38,7 @@
 	}
 	
 	function getNewCode($secret) {
-		global $db, $state;
+		global $db;
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `expires` < " . time());
 		if ($result->num_rows > 0) {
 			while ($row = $result->fetch_row()) {
