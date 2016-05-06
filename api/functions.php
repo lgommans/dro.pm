@@ -36,7 +36,7 @@
 		}
 		return $shorts;
 	}
-	
+
 	function getNewCode($secret) {
 		global $db;
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `expires` < " . time());
@@ -56,7 +56,7 @@
 		if (rand(1, 10) == 5) {
 			$db->query("DELETE FROM pastes WHERE NOT EXISTS (SELECT secret FROM shorts WHERE shorts.`secret` = pastes.`secret`)");
 		}
-		
+
 		$chars = getAllowedShorts();
 
 		$result = $db->query("SELECT `key` FROM shorts") or die('Database error 2539');
@@ -85,14 +85,14 @@
 			}
 		}
 		if ($used == true) {
-			error('No more shortcodes available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucb1e or lucb1e.com/email-address', '503 Service Temporarily Unavailable', false);
+			error('No more shortcodes available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
 		}
 
 		$db->query("INSERT INTO shorts VALUES('" . $char . "', -1, '', " . (time() + 180) . ", '" . $secret . "')") or die('Database error 15735');
-		
+
 		return $chosen;
 	}
-	
+
 	function filter_chars($shortcode) {
 		$shortcode = strtolower($shortcode);
 		$chars = getAllowedCharset();
@@ -103,7 +103,7 @@
 		}
 		return $shortcode;
 	}
-	
+
 	// Returns [dataAvailable, dataType, data]
 	// Where dataAvailable = true when there is data, false when there is no data, or string "2" when there is an error
 	// Where dataType = 1 for redirect, 2 for html to display or 3 for a file download
@@ -113,7 +113,7 @@
 		if ($shortcode === false) {
 			return array(false, null, null);
 		}
-		
+
 		$result = $db->query('SELECT `type`, `value` FROM shorts WHERE `key` = "' . $shortcode . '" AND `value` != "" AND `expires` > ' . time()) or die('Database error 53418');
 		if ($result->num_rows != 1) {
 			if ($checkExists) {
@@ -124,12 +124,12 @@
 			}
 			return array(false, null, null);
 		}
-		
+
 		$result = $result->fetch_row();
 		switch ($result[0]) {
 			case 0:
 				return array(true, 1, $result[1]);
-			
+
 			case 1:
 				$data = $db->query('SELECT `data` FROM pastes WHERE `secret` = "' . $result[1] . '"') or die('Database error 192483');
 				if ($data->num_rows == 0) {
@@ -139,7 +139,7 @@
 					$data = $data->fetch_row();
 				}
 				return array(true, 2, '<body style="margin:0"><textarea style="border:0; padding:9px; width:100%; height:99%">' . htmlspecialchars($data[0]) . '</textarea></body>');
-			
+
 			case 2:
 				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
 					$dir = 'uploads/';
@@ -155,12 +155,12 @@
 				else {
 					return array(true, 3, array('file', $dir . $metadata['filename'], $metadata['original_filename']));
 				}
-			
+
 			default:
 				return array('2', 2, 'There is something funny about this link of yours');
 		}
 	}
-	
+
 	function clearUrl($secret) {
 		global $db;
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `secret` = '" . $secret . "'");
@@ -178,3 +178,4 @@
 		$db->query('UPDATE `shorts` SET `type` = -1, `value` = "" WHERE `secret` = "' . $secret . '"') or die("Database error 83293");
 		return true;
 	}
+
