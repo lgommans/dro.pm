@@ -16,9 +16,8 @@ This project is old and ugly but I uploaded it anyway because people are interes
 
 **Setup**
 
-Setup the database from `db.sql` in MySQL or something and either place these files in your
-htdocs/docroot/wwwroot or run `php -S [::1]:3000`. You can configure the database credentials
-in `api/dbconn.php`.
+Setup the database from `db.sql` in MySQL or something and place these files in your htdocs (or
+docroot or wwwroot). You can configure the database credentials in `api/dbconn.php`.
 
 **Architecture**
 
