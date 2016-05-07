@@ -6,35 +6,46 @@
 	</head>
 	<body>
 		<div id="topbar">
-			dro.p <span style="color:#bbb">'e</span>m
+			<span id="dropem">dro.p <span style="color:#bbb">'e</span>m</span>
 			<div class="subtitle">Extremely short links</div>
 		</div>
 		<center>
-			<div id="action" style="font-size: 3em; font-weight: bold;">Loading...</div>
-			<div id="url" style="display:none"></div>
-			<div id="error" style="display:none"></div>
-			<form method="POST" action="nojs.php">
-				<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;"></textarea>
-				<noscript>
-					<input type="submit" value="Shorten!"><br>
-					<br>
-					<font color="red">
-						Note: Javascript is off. This website will not work currently.<br>
-						There has been no demand for a no-Javascript version yet, let me know if you require one!
-					</font>
-				</noscript>
-			</form>
-			<br>
-			<form method="POST" enctype="multipart/form-data" action="nojs.php" id="fileform">
-				Or upload a file: <input type="file" name="f" id="f">
-				<div style="display:none">
-					<input type="submit">
-					<iframe id="fileframe" name="fileframe"></iframe>
+			<div id="tabs">
+				<div class="tab" id="tabBtn1" onclick="tab(1);">
+					Share link
 				</div>
-			</form>
-			<div style="margin-top: 40px; color: #fff;" id=info><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a></div>
-			<div><br>
+				<div class="tab unselected" id="tabBtn2" onclick="tab(2);">
+					Send to device
+				</div>
 			</div>
+			<span id="tab1">
+				<div id="action" style="font-size: 3em; font-weight: bold;">Loading...</div>
+				<div id="url" style="display:none"></div>
+				<div id="error" style="display:none"></div>
+				<form method="POST" action="nojs.php">
+					<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;"></textarea>
+					<noscript>
+						<input type="submit" value="Shorten!"><br>
+						<br>
+						<font color="red">
+							Note: Javascript is off. This website will not work currently.<br>
+							There has been no demand for a no-Javascript version yet, let me know if you require one!
+						</font>
+					</noscript>
+				</form>
+				<br>
+				<form method="POST" enctype="multipart/form-data" action="nojs.php" id="fileform">
+					Or upload a file: <input type="file" name="f" id="f">
+					<div style="display:none">
+						<input type="submit">
+						<iframe id="fileframe" name="fileframe"></iframe>
+					</div>
+				</form>
+				<div style="margin-top: 40px; color: #fff;" id=info><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a></div>
+			</span>
+			<span id="tab2">
+				Hello World!
+			</span>
 		</center>
 		<script>
 // TODO: reAllocate shortcode if t>60s
@@ -45,6 +56,12 @@
 			$("toshorten").select();
 			var url = 'Loading...';
 			var urlShown = false;
+			var currentTab = 1;
+
+			$("dropem").style.cursor = "pointer";
+			$("dropem").onclick = function() {
+				tab(1);
+			};
 			
 			function shouldIncreaseToShortenHeight() {
 				return $("toshorten").clientWidth < $("toshorten").scrollWidth;
@@ -62,7 +79,7 @@
 
 			$("toshorten").onblur = function() {
 				if ($("toshorten").value.length == 0) {
-					$("action").innerHTML = "Share text, a link or a file<br>&nbsp;"
+					$("action").innerHTML = "Share text, a link or a file<br>&nbsp;";
 				}
 			};
 			
@@ -150,11 +167,9 @@
 					+ '<div class="urlSubtitle">(Works for 12 hours)</div>';
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
-					console.log("updating html from\n" + $("url").innerHTML + " to\n" + html);
 				}
 				if ($("url").style.display != "block") {
 					$("url").style.display = "block";
-					console.log("updating style");
 				}
 				urlShown = true;
 			}
@@ -208,6 +223,18 @@
 					}
 				}, errorHandler);
 			}
+
+			function tab(n) {
+				if (n == currentTab) {
+					return;
+				}
+				$("tab" + currentTab).style.display = "none";
+				$("tab" + n).style.display = "inline";
+				$("tabBtn" + currentTab).className = "tab unselected";
+				$("tabBtn" + n).className = "tab";
+
+				currentTab = n;
+			}
 			
 			function allocateURI() {
 				aPOST('api/v1/allocate', '', function(data) {
@@ -228,7 +255,6 @@
 				font-size: 4em;
 				font-weight: bold;
 				margin: 0;
-				margin-bottom: 60px;
 				padding: 20px 0 30px 0;
 				border: 0;
 				border-bottom: 2px solid #DDD;
@@ -240,7 +266,7 @@
 			body {
 				font-family: Arial;
 				margin: 0;
-				background: url('res/img/bg.png');
+				background: url('res/img/bg.jpg');
 				color: #FFB030;
 			}
 			#url {
@@ -262,6 +288,31 @@
 			center {
 				max-width: 610px;
 				margin: 0 auto 0 auto;
+			}
+			#tabs {
+				height: 80px;
+				width: 350px;
+			}
+			.tab {
+				padding-top: 8px;
+				padding-left: 25px;
+				padding-right: 25px;
+				height: 36px;
+				border: 1px solid #DDD;
+				border-top: none;
+				font-size: 14pt;
+				font-weight: bold;
+				background-color: #292932;
+			}
+			#tabs .unselected {
+				background-color: transparent;
+				cursor: pointer;
+			}
+			#tabBtn1 {
+				float: left;
+			}
+			#tabBtn2 {
+				float: right;
 			}
 		</style>
 	</body>

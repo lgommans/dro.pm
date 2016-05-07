@@ -1,7 +1,17 @@
 <?php 
-	function allocate() {
+	function allocate($code = false) {
 		$secret = bin2hex(openssl_random_pseudo_bytes(20));
-		$code = getNewCode($secret);
+		if (empty($code)) {
+			$code = getNewCode($secret);
+		}
+		else {
+			if (codeExists($code)) {
+				return false;
+			}
+			else {
+				$db->query("INSERT INTO shorts VALUES('" . $db->escape_string($code) . "', -1, '', " . (time() + 900) . ", '" . $secret . "')") or die('Database error 81935');
+			}
+		}
 		return [$secret, $code];
 	}
 

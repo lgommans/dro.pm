@@ -22,7 +22,7 @@
 	
 	switch ($_GET['cmd']) {
 		case 'allocate':
-			die(json_encode(allocate()));
+			die(json_encode(allocate($_GET['code'])));
 
 		case 'changeTimePeriod':
 			changeTimePeriod();
@@ -54,6 +54,7 @@
 	error('This code should never be reached, so some weird bug occurred', '500 Internal Server Error');
 
 	function changeTimePeriod() {
+		global $db;
 		if (!isset($_GET['secret'])) {
 			error("No secret included in request.");
 		}
@@ -66,6 +67,7 @@
 	}
 
 	function set() {
+		global $db;
 		if (!isset($_GET['secret'])) {
 			error("No secret included in request.");
 		}
@@ -114,6 +116,7 @@
 	}
 
 	function extend() {
+		global $db;
 		if (intval($_GET['val']) == $_GET['val'] && intval($_GET['val']) < 72 * 3600) {
 			$newexpires = (time() + intval($_GET['val']));
 			$db->query('UPDATE shorts SET `expires` = ' . $newexpires . ' WHERE `secret` = "' . $db->escape_string($_GET['secret']) . '" AND `expires` < ' . $newexpires) or die('Database error 185302');
