@@ -1,6 +1,10 @@
 # Dro.pm - drop 'em - share files, links, text
 
-This project is old and ugly but I uploaded it anyway because people are interested in it.
+This project's code is old and ugly but I uploaded it anyway because people are interested.
+
+**Note:** *the current version on Github is a beta, and is not yet live. You can run it locally to
+preview the new feature that's in beta!*
+
 
 **File info**
 
