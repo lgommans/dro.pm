@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS `pastes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE TABLE IF NOT EXISTS `shorts` (
-  `key` varchar(100) NOT NULL,
+  `key` varchar(255) NOT NULL,
   `type` tinyint(4) NOT NULL,
   `value` varchar(25000) NOT NULL,
   `expires` int(10) unsigned NOT NULL,
