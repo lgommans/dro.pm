@@ -12,19 +12,21 @@
 		<center>
 			<div id="tabs">
 				<div class="tab" id="tabBtn1" onclick="tab(1);">
-					Share link
+					Share via link
 				</div>
 				<div class="tab unselected" id="tabBtn2" onclick="tab(2);">
 					Send to device
 				</div>
 			</div>
-			<span id="sendToDevice" style="display: none; margin-bottom: 20px;">
-				New: sending a link, file or text to another device!<br>
+			<span id="sendToDevice" style="display: none; margin-bottom: 20px; font-size: 14pt;">
+				<i>New: sending a link, file or text to another device!<br></i>
 				<span id="toDeviceInfo"><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:toDeviceInfo()">More info about this feature.</a></span>
+				<br><br><br>
+				<span style="font-weight: bold; font-size: 30pt;">1. Recipient</span><br>
+				Type any name: <input maxlength=250 id=recipient> <span id=recipientValidation></span>
 				<br><br>
-				Recipient: <input maxlength=250 id=recipient> <span id=recipientValidation></span>
 			</span>
-			<div id="action" style="font-size: 3em; font-weight: bold;">Loading...</div>
+			<div id="action" style="font-size: 30pt; font-weight: bold;">Loading...</div>
 			<div id="url" style="display:none"></div>
 			<div id="error" style="display:none"></div>
 			<form method="POST" action="nojs.php">
@@ -60,6 +62,8 @@
 			var currentTab = 1;
 			var customUrl = false;
 
+			var secretsDB = {"shorturl": {}, "customurls": {}};
+
 			$("dropem").style.cursor = "pointer";
 			$("dropem").onclick = function() {
 				tab(1);
@@ -79,9 +83,10 @@
 			var hasPasted = false;
 			$("toshorten").value = "";
 
-			$("toshorten").onblur = function() {
-				if ($("toshorten").value.length == 0) {
-					$("action").innerHTML = "Share text, a link or a file<br>&nbsp;";
+			$("toshorten").onblur = function(force) {
+				if ($("toshorten").value.length == 0 || force === true) {
+					var t = (customUrl === false ? "" : "2. ");
+					$("action").innerHTML = t + "Share text, a link or a file<br>&nbsp;";
 				}
 			};
 			
@@ -136,11 +141,11 @@
 					aGET('api/v1/check/' + url.replace('dro.pm/', ''), function(data) {
 						if (data == '1') {
 							var t = "";
-							if (customUrl !== false) {
-								t = "Send this link to the recipient:";
+							if (customUrl === false) {
+								t = "Your short link:";
 							}
 							else {
-								t = "Your short link:";
+								t = "Send this link to the recipient:";
 							}
 							$("action").innerHTML = "All done!<br>" + t;
 						}
@@ -164,31 +169,40 @@
 					return; // Nothing changed.
 				}
 
+				var red = function(t) { return "<font color='#f00'>" + t + "</font>"; }
+				var green = function(t) { return "<font color='#0f0'>" + t + "</font>"; }
 				var judgement = "";
-				if (r.length == 0) {
-					// intentionally skipped
-				}
-				else if (r.length < 4) {
-					judgement = "Too short";
-				}
-				else if (!/[a-zA-Z0-9]*/.test(r)) {
-					judgement = "Only a-z and 0-9";
+				if (secretsDB['customurls'][r] && secretsDB['customurls'][r]['taken']) {
+					var judgement = green("Looks good!");
 				}
 				else {
-					judgement = "Loading...";
-					aGET('api/v2/allocate/' + escape(r), function(data) {
-						data = eval(data);
-						var taken = data[0];
-						if (!taken) {
-							customUrl = data[2];
-							secret = data[1];
-							setUrl(data[2]);
-							$("recipientValidation").innerHTML = "Looks good!";
-						}
-						else {
-							$("recipientValidation").innerHTML = "Already taken.";
-						}
-					}, errorHandler);
+					if (r.length == 0) {
+						// intentionally skipped
+					}
+					else if (r.length < 4) {
+						judgement = red("Too short");
+					}
+					else if (!/^[a-zA-Z0-9]*$/.test(r)) {
+						judgement = red("Only a-z & 0-9, no spaces");
+					}
+					else {
+						judgement = "Loading...";
+						aGET('api/v2/allocate/' + escape(r), function(data) {
+							data = eval(data);
+							var taken = data[0];
+							if (!taken) {
+								customUrl = data[2];
+								secret = data[1];
+								setUrl(data[2]);
+								secretsDB['customurls'][data[2]] = {"taken": false, "secret": data[1]};
+								$("recipientValidation").innerHTML = green("Looks good!");
+							}
+							else {
+								secretsDB['customurls'][r] = {"taken": true};
+								$("recipientValidation").innerHTML = red("Already taken.");
+							}
+						}, errorHandler);
+					}
 				}
 				$("recipientValidation").innerHTML = judgement;
 			};
@@ -266,7 +280,12 @@
 				showUrl();
 				aPOST('api/v1/set/' + secret, to, function(data) {
 					if (data == '1') {
-						$("action").innerHTML = "Your short link:";
+						if (customUrl === false) {
+							$("action").innerHTML = "Your short link:";
+						}
+						else {
+							$("action").innerHTML = "Send this link to the recipient:";
+						}
 					}
 				}, errorHandler);
 			}
@@ -275,14 +294,16 @@
 				if (n == currentTab) {
 					return;
 				}
+				if (n == 1) {
+					sendToDevice(false);
+				}
+				else {
+					sendToDevice(true);
+				}
 				//$("tab" + currentTab).style.display = "none";
 				//$("tab" + n).style.display = "inline";
 				$("tabBtn" + currentTab).className = "tab unselected";
 				$("tabBtn" + n).className = "tab";
-
-				if (n == 2) {
-					sendToDevice(true);
-				}
 
 				currentTab = n;
 			}
@@ -290,9 +311,16 @@
 			function sendToDevice(activate) {
 				if (!activate) {
 					$("sendToDevice").style.display = "none";
+					customUrl = false;
+					secret = secretsDB['shorturl']['secret'];
+					setUrl(secretsDB['shorturl']['url']);
+					$("url").innerHTML = '';
+					urlShown = false;
+					$("toshorten").onblur(true);
 				}
 				else {
 					$("sendToDevice").style.display = "inline-block";
+					$("action").innerHTML = "2. " + $("action").innerHTML;
 				}
 			}
 			
@@ -301,6 +329,7 @@
 					data = eval(data);
 					setUrl(data[1]);
 					secret = data[0];
+					secretsDB['shorturl'] = {'secret': secret, 'url': data[1]};
 				}, errorHandler);
 			}
 
@@ -357,7 +386,7 @@
 			}
 			#tabs {
 				height: 80px;
-				width: 350px;
+				width: 400px;
 			}
 			.tab {
 				padding-top: 8px;
