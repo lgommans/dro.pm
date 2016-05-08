@@ -12,8 +12,8 @@
 		error();
 	}
 	
-	$v = intval($_GET['v']);
-	if ($v != 1) {
+	$ApiVersion = intval($_GET['v']);
+	if ($ApiVersion != 1 && $ApiVersion != 2) {
 		error('Invalid version number');
 	}
 	
@@ -22,7 +22,7 @@
 	
 	switch ($_GET['cmd']) {
 		case 'allocate':
-			die(json_encode(allocate($_GET['code'])));
+			die(json_encode(allocate($_GET['code'], $ApiVersion)));
 
 		case 'changeTimePeriod':
 			changeTimePeriod();

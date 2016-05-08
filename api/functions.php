@@ -1,18 +1,37 @@
 <?php 
-	function allocate($code = false) {
+	// Returns an array with either:
+	// if api version 1: [string secret, string code]
+	// if api version 2: [bool already_exists, string secret, string code]
+	function allocate($code = false, $ApiVersion = 1) {
+		global $db;
+
 		$secret = bin2hex(openssl_random_pseudo_bytes(20));
 		if (empty($code)) {
 			$code = getNewCode($secret);
 		}
 		else {
 			if (codeExists($code)) {
-				return false;
+				return [true];
 			}
 			else {
 				$db->query("INSERT INTO shorts VALUES('" . $db->escape_string($code) . "', -1, '', " . (time() + 900) . ", '" . $secret . "')") or die('Database error 81935');
 			}
 		}
+
+		if ($ApiVersion == 2) {
+			return [false, $secret, $code];
+		}
+
 		return [$secret, $code];
+	}
+
+	function codeExists($code) {
+		global $db;
+		$result = $db->query('SELECT `key` FROM shorts WHERE `key` = "' . $db->escape_string($code) . '"') or die('Database error 671948');
+		if ($result->num_rows > 0) {
+			return true;
+		}
+		return false;
 	}
 
 	function getAllowedCharset() {
@@ -185,7 +204,7 @@
 			}
 			unlink($dir . $data['filename']);
 		}
-		$db->query('UPDATE `shorts` SET `type` = -1, `value` = "" WHERE `secret` = "' . $secret . '"') or die("Database error 83293");
+		$db->query('UPDATE `shorts` SET `type` = -1, `value` = "", `expires` = ' . (time() + 300) . ' WHERE `secret` = "' . $secret . '"') or die("Database error 83293");
 		return true;
 	}
 

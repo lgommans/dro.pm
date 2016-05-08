@@ -18,34 +18,35 @@
 					Send to device
 				</div>
 			</div>
-			<span id="tab1">
-				<div id="action" style="font-size: 3em; font-weight: bold;">Loading...</div>
-				<div id="url" style="display:none"></div>
-				<div id="error" style="display:none"></div>
-				<form method="POST" action="nojs.php">
-					<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;"></textarea>
-					<noscript>
-						<input type="submit" value="Shorten!"><br>
-						<br>
-						<font color="red">
-							Note: Javascript is off. This website will not work currently.<br>
-							There has been no demand for a no-Javascript version yet, let me know if you require one!
-						</font>
-					</noscript>
-				</form>
-				<br>
-				<form method="POST" enctype="multipart/form-data" action="nojs.php" id="fileform">
-					Or upload a file: <input type="file" name="f" id="f">
-					<div style="display:none">
-						<input type="submit">
-						<iframe id="fileframe" name="fileframe"></iframe>
-					</div>
-				</form>
-				<div style="margin-top: 40px; color: #fff;" id=info><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a></div>
+			<span id="sendToDevice" style="display: none; margin-bottom: 20px;">
+				New: sending a link, file or text to another device!<br>
+				<span id="toDeviceInfo"><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:toDeviceInfo()">More info about this feature.</a></span>
+				<br><br>
+				Recipient: <input maxlength=250 id=recipient> <span id=recipientValidation></span>
 			</span>
-			<span id="tab2">
-				Hello World!
-			</span>
+			<div id="action" style="font-size: 3em; font-weight: bold;">Loading...</div>
+			<div id="url" style="display:none"></div>
+			<div id="error" style="display:none"></div>
+			<form method="POST" action="nojs.php">
+				<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;"></textarea>
+				<noscript>
+					<input type="submit" value="Shorten!"><br>
+					<br>
+					<font color="red">
+						Note: Javascript is off. This website will not work currently.<br>
+						There has been no demand for a no-Javascript version yet, let me know if you require one!
+					</font>
+				</noscript>
+			</form>
+			<br>
+			<form method="POST" enctype="multipart/form-data" action="nojs.php" id="fileform">
+				Or upload a file: <input type="file" name="f" id="f">
+				<div style="display:none">
+					<input type="submit">
+					<iframe id="fileframe" name="fileframe"></iframe>
+				</div>
+			</form>
+			<div style="margin-top: 40px; color: #fff;" id=info><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a></div>
 		</center>
 		<script>
 // TODO: reAllocate shortcode if t>60s
@@ -57,6 +58,7 @@
 			var url = 'Loading...';
 			var urlShown = false;
 			var currentTab = 1;
+			var customUrl = false;
 
 			$("dropem").style.cursor = "pointer";
 			$("dropem").onclick = function() {
@@ -133,7 +135,14 @@
 				function checkForUpdate() {
 					aGET('api/v1/check/' + url.replace('dro.pm/', ''), function(data) {
 						if (data == '1') {
-							$("action").innerHTML = "All done!<br>Your short link:";
+							var t = "";
+							if (customUrl !== false) {
+								t = "Send this link to the recipient:";
+							}
+							else {
+								t = "Your short link:";
+							}
+							$("action").innerHTML = "All done!<br>" + t;
 						}
 						else {
 							t = Math.min(1750, t + 50);
@@ -145,6 +154,43 @@
 				setTimeout(function() {
 					checkForUpdate();
 				}, 750);
+			};
+
+			$("recipient").onkeyup =
+			$("recipient").onmouseup =
+			$("recipient").onchange = function() {
+				var r = $("recipient").value;
+				if (r == customUrl) {
+					return; // Nothing changed.
+				}
+
+				var judgement = "";
+				if (r.length == 0) {
+					// intentionally skipped
+				}
+				else if (r.length < 4) {
+					judgement = "Too short";
+				}
+				else if (!/[a-zA-Z0-9]*/.test(r)) {
+					judgement = "Only a-z and 0-9";
+				}
+				else {
+					judgement = "Loading...";
+					aGET('api/v2/allocate/' + escape(r), function(data) {
+						data = eval(data);
+						var taken = data[0];
+						if (!taken) {
+							customUrl = data[2];
+							secret = data[1];
+							setUrl(data[2]);
+							$("recipientValidation").innerHTML = "Looks good!";
+						}
+						else {
+							$("recipientValidation").innerHTML = "Already taken.";
+						}
+					}, errorHandler);
+				}
+				$("recipientValidation").innerHTML = judgement;
 			};
 
 			function info() {
@@ -176,8 +222,9 @@
 			
 			function setUrl(shortcode) {
 				url = "dro.pm/" + shortcode;
-				if (urlShown)
+				if (urlShown) {
 					showUrl(url);
+				}
 			}
 			
 			setInterval($("toshorten").onchange, 250);
@@ -228,12 +275,25 @@
 				if (n == currentTab) {
 					return;
 				}
-				$("tab" + currentTab).style.display = "none";
-				$("tab" + n).style.display = "inline";
+				//$("tab" + currentTab).style.display = "none";
+				//$("tab" + n).style.display = "inline";
 				$("tabBtn" + currentTab).className = "tab unselected";
 				$("tabBtn" + n).className = "tab";
 
+				if (n == 2) {
+					sendToDevice(true);
+				}
+
 				currentTab = n;
+			}
+
+			function sendToDevice(activate) {
+				if (!activate) {
+					$("sendToDevice").style.display = "none";
+				}
+				else {
+					$("sendToDevice").style.display = "inline-block";
+				}
 			}
 			
 			function allocateURI() {
@@ -242,6 +302,12 @@
 					setUrl(data[1]);
 					secret = data[0];
 				}, errorHandler);
+			}
+
+			function toDeviceInfo() {
+				$("toDeviceInfo").innerHTML = "Often you want to share something just with one person, or even yourself. Normal short links are guessable and take hours to expire; "
+					+ "this feature will automatically remove your data after the recipient opened it, and you can pick whom should receive it so a password is not needed.<br><br>TODO: gif of how it works";
+				$("toDeviceInfo").style.color = "white";
 			}
 			
 			allocateURI();
