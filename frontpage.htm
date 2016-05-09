@@ -25,6 +25,8 @@
 				<span style="font-weight: bold; font-size: 30pt;">1. Recipient</span><br>
 				Type any name: <input maxlength=250 id=recipient> <span id=recipientValidation></span>
 				<br><br>
+				<label><input type=checkbox id=expireAfterFirstDownload checked=checked> Expire link immediately after opening</label>
+				<br><br>
 			</span>
 			<div id="action" style="font-size: 30pt; font-weight: bold;">Loading...</div>
 			<div id="url" style="display:none"></div>
@@ -61,6 +63,7 @@
 			var urlShown = false;
 			var currentTab = 1;
 			var customUrl = false;
+			var secret = false;
 
 			var secretsDB = {"shorturl": {}, "customurls": {}};
 
@@ -68,17 +71,17 @@
 			$("dropem").onclick = function() {
 				tab(1);
 			};
-			
+
 			function shouldIncreaseToShortenHeight() {
 				return $("toshorten").clientWidth < $("toshorten").scrollWidth;
 			}
-			
+
 			if ($("toshorten").value != "") {
 				if (shouldIncreaseToShortenHeight()) {
 					$("toshorten").style.height = "36px";
 				}
 			}
-						
+
 			var prevval = "";
 			var hasPasted = false;
 			$("toshorten").value = "";
@@ -89,7 +92,7 @@
 					$("action").innerHTML = t + "Share text, a link or a file<br>&nbsp;";
 				}
 			};
-			
+
 			$("toshorten").onkeyup =
 			$("toshorten").onmouseup =
 			$("toshorten").onchange = function() {
@@ -97,14 +100,14 @@
 				if (shouldIncreaseToShortenHeight()) {
 					height += 18;
 				}
-				
+
 				// Did we paste multiline text?
 				if ($("toshorten").value.indexOf("\n") > -1) {
 					height += $("toshorten").value.match(/\n/g).length * 18 + 2;
 					height = Math.max(28, Math.min(350, height));
 					$("toshorten").style.width = "600px";
 				}
-				
+
 				$("toshorten").style.height = height + "px";
 				// Does the value suddenly increase a lot in length?
 				if ($("toshorten").value.length > prevval.length + 10) {
@@ -121,22 +124,23 @@
 				}
 				prevval = $("toshorten").value;
 			};
-			
+
 			$("f").onchange = function() {
-				aGET('api/v1/extend/' + secret + '/1800'); // Reserve the link for 30 minutes so it can upload
 				aGET('api/v1/clear/' + secret);
-				
+
 				setTimeout(function() {
-					$("fileform").action = "fileman.php?secret=" + secret;
+					// Delay a little bit of time to make sure the previous request went on the network already, and preceeds this one on the server (should we do sequence numbers maybe?).
+					aGET('api/v1/extend/' + secret + '/900', function(){}); // Reserve the link for 15 minutes so it can upload
+					$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + expireAfterFirstDownload(true);
 					$("fileform").target = "fileframe";
 					$("fileform").submit();
 				}, 50);
-				
+
 				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Uploading...<br>your link will be:";
 				showUrl();
-				
+
 				t = 400;
-				
+
 				function checkForUpdate() {
 					aGET('api/v1/check/' + url.replace('dro.pm/', ''), function(data) {
 						if (data == '1') {
@@ -155,7 +159,7 @@
 						}
 					});
 				}
-				
+
 				setTimeout(function() {
 					checkForUpdate();
 				}, 750);
@@ -172,8 +176,14 @@
 				var red = function(t) { return "<font color='#f00'>" + t + "</font>"; }
 				var green = function(t) { return "<font color='#0f0'>" + t + "</font>"; }
 				var judgement = "";
-				if (secretsDB['customurls'][r] && secretsDB['customurls'][r]['taken']) {
-					var judgement = green("Looks good!");
+				if (secretsDB['customurls'][r] && !secretsDB['customurls'][r]['taken']) {
+					customUrl = r;
+					secret = secretsDB['customurls'][r]['secret'];
+					setUrl(r);
+					judgement = green("Looks good!");
+				}
+				else if (secretsDB['customurls'][r] && secretsDB['customurls'][r]['taken']) {
+					judgement = red("Already taken.");
 				}
 				else {
 					if (r.length == 0) {
@@ -221,7 +231,7 @@
 					+ 'You can also upload files from the command line:<br>'
 					+ '<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="http://pastebin.com/0u08fBr8">http://pastebin.com/0u08fBr8</a>';
 			}
-			
+
 			function showUrl() {
 				var html = '<span style="display:inline-block">' + url + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
 					+ '<div class="urlSubtitle">(Works for 12 hours)</div>';
@@ -233,14 +243,14 @@
 				}
 				urlShown = true;
 			}
-			
+
 			function setUrl(shortcode) {
 				url = "dro.pm/" + shortcode;
 				if (urlShown) {
 					showUrl(url);
 				}
 			}
-			
+
 			setInterval($("toshorten").onchange, 250);
 
 			function aPOST(uri, data, callback, errorCallback) {
@@ -259,7 +269,7 @@
 				};
 				req.send('val=' + encodeURIComponent(data));
 			}
-			
+
 			function aGET(uri, callback) {
 				var req = new XMLHttpRequest();
 				req.open("GET", uri, true);
@@ -269,16 +279,27 @@
 						callback(req.responseText);
 				}
 			}
-			
+
 			function errorHandler(message) {
 				$("error").style.display = "block";
 				$("error").innerHTML = message;
 			}
 
+			function expireAfterFirstDownload(str) {
+				if (str) {
+					return $("expireAfterFirstDownload").checked ? "true" : "false";
+				}
+				return $("expireAfterFirstDownload").checked;
+			}
+
 			function setData(to) {
+				if (secret === false) {
+					errorHandler("Internal sanity check failed. We're sorry but this is not going to fly. Please try again.");
+					return;
+				}
 				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Your link will be:";
 				showUrl();
-				aPOST('api/v1/set/' + secret, to, function(data) {
+				aPOST('api/v2/set/' + secret + '/' + expireAfterFirstDownload(true), to, function(data) {
 					if (data == '1') {
 						if (customUrl === false) {
 							$("action").innerHTML = "Your short link:";
@@ -321,9 +342,11 @@
 				else {
 					$("sendToDevice").style.display = "inline-block";
 					$("action").innerHTML = "2. " + $("action").innerHTML;
+					$("url").innerHTML = "";
+					urlShown = false;
 				}
 			}
-			
+
 			function allocateURI() {
 				aPOST('api/v1/allocate', '', function(data) {
 					data = eval(data);
@@ -338,7 +361,7 @@
 					+ "this feature will automatically remove your data after the recipient opened it, and you can pick whom should receive it so a password is not needed.<br><br>TODO: gif of how it works";
 				$("toDeviceInfo").style.color = "white";
 			}
-			
+
 			allocateURI();
 		</script>
 		<style>

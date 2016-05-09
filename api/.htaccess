@@ -5,4 +5,5 @@ RewriteRule ^v([0-9])/([a-zA-Z0-9-]*)/?$										index.php?v=$1&cmd=$2
 RewriteRule ^v([0-9])/allocate/([a-zA-Z0-9-]{4,250})/?$							index.php?v=$1&cmd=allocate&code=$2
 RewriteRule ^v([0-9])/([a-zA-Z0-9-]*)/([0-9a-zA-Z]{1,5})/?$						index.php?v=$1&cmd=$2&val=$3
 RewriteRule ^v([0-9])/([a-zA-Z0-9-]*)/([0-9a-f]{6,40})/?$						index.php?v=$1&cmd=$2&secret=$3
+RewriteRule ^v([0-9])/set/([0-9a-f]{6,40})/(true|false)/?$						index.php?v=$1&cmd=set&secret=$2&expireAfterDownload=$3
 RewriteRule ^v([0-9])/([a-zA-Z0-9-]*)/([0-9a-f]{6,40})/([0-9a-zA-Z]{1,5})/?$	index.php?v=$1&cmd=$2&secret=$3&val=$4

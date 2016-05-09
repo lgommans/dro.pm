@@ -2,9 +2,7 @@
 require('api/dbconn.php');
 require('api/functions.php');
 
-$shortcode = filter_chars($_GET['shortcode']);
-
-list($status, $type, $data) = tryGet($shortcode, true);
+list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
 	if ($type == 1) {
 		header("Location: " . $data);
@@ -24,6 +22,11 @@ if ($status !== false) {
 		header('Content-Length: ' . filesize($data[1]));
 		flush();
 		readfile($data[1]);
+
+		if ($expireAfterDownload == "1") {
+			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.");
+		}
+
 		exit;
 	}
 }
@@ -73,3 +76,4 @@ So far this is taking <span id='secs'>0</span> seconds. You should close the pag
 While you are waiting, would you perhaps enjoy a game of Escapa?<br>
 <br>
 <iframe src='//lucb1e.com/rp/randomupload/escapa.html' width="475" height="475" border="0" frameborder="no"></iframe>
+

@@ -7,19 +7,19 @@
 		echo '<h3>' . $status . '</h3>' . $message . $defaultMessage;
 		exit;
 	}
-	
+
 	if (!isset($_GET['v'])) {
 		error();
 	}
-	
+
 	$ApiVersion = intval($_GET['v']);
 	if ($ApiVersion != 1 && $ApiVersion != 2) {
 		error('Invalid version number');
 	}
-	
+
 	require('dbconn.php');
 	require('functions.php');
-	
+
 	switch ($_GET['cmd']) {
 		case 'allocate':
 			die(json_encode(allocate($_GET['code'], $ApiVersion)));
@@ -28,7 +28,7 @@
 			changeTimePeriod();
 
 		case 'set':
-			set();
+			api_set();
 
 		case 'check':
 			check();
@@ -50,7 +50,7 @@
 		default:
 			error('Unknown command or no command specified');
 	}
-	
+
 	error('This code should never be reached, so some weird bug occurred', '500 Internal Server Error');
 
 	function changeTimePeriod() {
@@ -63,43 +63,6 @@
 			error("Time too short or too long (min. 15 seconds, max. 12 hours)");
 		}
 		$db->query('UPDATE shorts SET `expires` = ' . (time() + $period) . ' WHERE secret = "' . $db->escape_string($_GET['secret']) . '"') or die("Database error 295710");
-		die('1');
-	}
-
-	function set() {
-		global $db;
-		if (!isset($_GET['secret'])) {
-			error("No secret included in request.");
-		}
-		
-		$secret = $db->escape_string($_GET['secret']);
-		$data = $_POST['val'];
-		
-		if (empty($data)) {
-			if (clearUrl($secret)) {
-				die('1');
-			}
-			error('Something odd happened', '500 Internal Server Error');
-		}
-		
-		$host = parse_url($data, PHP_URL_HOST);
-		if ($host === false || empty($host) || strlen($data) > 25000 || strpos($data, "\n") !== false || strpos($data, " http") !== false) {
-			$db->query('DELETE FROM pastes WHERE `secret` = "' . $secret . '"') or die('Database error 62871');
-			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $secret . '")') or die('Database error 518543');
-			$data = substr($secret, 0, 40);
-			$type = "1";
-		}
-		else {
-			$type = "0";
-		}
-		
-		$db->query('UPDATE shorts '
-			. 'SET `value` = "' . $db->escape_string($data) . '", '
-				. '`expires` = ' . (time() + (3600 * 12)) . ', '
-				. '`type` = "' . $type . '" '
-			. 'WHERE secret = "' . $db->escape_string($_GET['secret']) . '"')
-			or die("Database error 28943");
-		
 		die('1');
 	}
 
