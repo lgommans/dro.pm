@@ -5,10 +5,18 @@ require('api/functions.php');
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
 	if ($type == 1) {
+		if ($expireAfterDownload == "1") {
+			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.");
+		}
+
 		header("Location: " . $data);
 		exit;
 	}
 	else if ($type == 2) {
+		if ($expireAfterDownload == "1") {
+			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.");
+		}
+
 		die($data);
 	}
 	else {

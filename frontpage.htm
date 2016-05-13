@@ -205,11 +205,15 @@
 								secret = data[1];
 								setUrl(data[2]);
 								secretsDB['customurls'][data[2]] = {"taken": false, "secret": data[1]};
-								$("recipientValidation").innerHTML = green("Looks good!");
+								if (customUrl == $("recipient").value) {
+									$("recipientValidation").innerHTML = green("Looks good!");
+								}
 							}
 							else {
 								secretsDB['customurls'][r] = {"taken": true};
-								$("recipientValidation").innerHTML = red("Already taken.");
+								if (customUrl == $("recipient").value) {
+									$("recipientValidation").innerHTML = red("Already taken.");
+								}
 							}
 						}, errorHandler);
 					}
