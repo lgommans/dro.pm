@@ -3,5 +3,6 @@ ErrorDocument 404 "Page not found. To contact the admin, see lgms.nl"
 RewriteEngine On
 RewriteRule ^$ frontpage.htm [END]
 RewriteRule ^fileman.php fileman.php [END]
+RewriteRule ^bug.php bug.php [END]
 RewriteRule ^([a-z0-9A-Z]{1,250})(\.[a-zA-Z0-9.]{0,10})?/?$ gotoUrl.php?shortcode=$1 [END]
 

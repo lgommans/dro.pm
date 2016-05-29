@@ -5,19 +5,21 @@ require('api/functions.php');
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
 	if ($type == 1) {
+		header("Location: " . $data);
+
 		if ($expireAfterDownload == "1") {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.");
 		}
-
-		header("Location: " . $data);
 		exit;
 	}
 	else if ($type == 2) {
+		echo $data;
+
 		if ($expireAfterDownload == "1") {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.");
 		}
 
-		die($data);
+		exit;
 	}
 	else {
 		if ($data[0] != 'file') {
@@ -55,7 +57,7 @@ So far this is taking <span id='secs'>0</span> seconds. You should close the pag
 	}, 1000);
 	
 	function checkForUpdate() {
-		aGET('api/v1/check/<?php echo $shortcode; ?>', function(data) {
+		aGET('api/v1/check/<?php echo htmlspecialchars($_GET['shortcode']); ?>', function(data) {
 			if (data == '1') {
 				location.reload();
 			}

@@ -10,7 +10,12 @@
 			$code = getNewCode($secret);
 		}
 		else {
-			if (codeExists($code)) {
+			$exists = codeExists($code);
+			if ($exists === "semi") {
+				clearUrl(getSecretByCode($code));
+				$db->query('DELETE FROM shorts WHERE `key` = "' . $db->escape_string($code) . '"') or die('Database error 95184');
+			}
+			if ($exists === true) {
 				return [true];
 			}
 			else {
@@ -25,10 +30,18 @@
 		return [$secret, $code];
 	}
 
+	// Returns true for taken; false for not taken; "semi" for taken but expired (will evaluate to true for unaware functions)
 	function codeExists($code) {
 		global $db;
-		$result = $db->query('SELECT `key` FROM shorts WHERE `key` = "' . $db->escape_string($code) . '"') or die('Database error 671948');
+		$result = $db->query('SELECT `secret`, `type` FROM shorts WHERE `key` = "' . $db->escape_string($code) . '"') or die('Database error 671948');
 		if ($result->num_rows > 0) {
+			$result = $result->fetch_row();
+			if ($result[1] == 2) {
+				$result = $db->query('SELECT `data` FROM pastes WHERE `secret` = "' . $db->escape_string($secret) . '"') or die('Database error 95279');
+				if ($result->fetch_row()[0] == 'This link has already been downloaded.') {
+					return "semi";
+				}
+			}
 			return true;
 		}
 		return false;
@@ -135,10 +148,10 @@
 			if ($checkExists) {
 				$result = $db->query('SELECT `value`, `expireAfterDownload` FROM shorts WHERE `key` = "' . $db->escape_string($shortcode) . '" AND `expires` > ' . time()) or die('Database error 7150183');
 				if ($result->num_rows != 1) {
-					return array("2", 2, 'This link does not exist! Perhaps you would like to <a href="./">shorten your own?</a>');
+					return array("2", 2, 'This link does not exist! Perhaps you would like to <a href="./">shorten your own?</a>', false);
 				}
 			}
-			return array(false, null, null);
+			return array(false, null, null, false);
 		}
 
 		$result = $result->fetch_row();
