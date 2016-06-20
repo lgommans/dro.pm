@@ -3,6 +3,7 @@
 	require('api/functions.php');
 
 	if (!isset($_FILES['f'])) {
+		header("HTTP/1.1 400 Bad Request");
 		die("No file given?");
 	}
 
@@ -14,7 +15,7 @@
 	}
 
 	if (empty($_GET['secret'])) {
-		if ($_SERVER['HTTP_USER_AGENT'] == 'cli') {
+		if ($_SERVER['HTTP_USER_AGENT'] == 'cli' || $_SERVER['HTTP_USER_AGENT'] == 'dro.pm-androidapp') {
 			list($secret, $key) = allocate();
 			$retval = "$secret dro.pm/$key";
 		}
