@@ -1,6 +1,10 @@
 # [Drop 'em](http://dro.pm) - share files, links, text
 
-This project's code is old and ugly but I uploaded it anyway because people are interested.
+The project now contains a web and android part. This README is mostly about the web part.
+
+## The website
+
+This project's code is old and ugly but I uploaded it anyway because people were interested.
 
 **File info**
 
@@ -38,10 +42,13 @@ wnat to monitor for / rate limit in the future.
 
 **License**
 
-Default Dutch copyright applies with the exception that you may use this code and run it locally,
-as long as it is for the sole purpose of contributing back to the project. (Why bother publishing
-at all then? Well you are welcome to read the code and learn from it, plus you can contribute your
-own features to [dro.pm](http://dro.pm).)
+For anything in the `web` folder, Dutch copyright applies with the exception
+that you may use this code and run it locally, as long as it is for the sole
+purpose of contributing back to the project. (Why bother publishing at all
+then? Well you are welcome to read the code and learn from it, plus you can
+contribute your own features to [dro.pm](http://dro.pm).)
+
+For anything in the `android` folder, see the `android/dropm.luc/README.md` file.
 
 **To do**
 
