@@ -6,4 +6,4 @@
 	define('LENGTH_SHORT', 1);
 	define('LENGTH_MEDIUM', 2);
 	define('LENGTH_LONG', 3);
-	
+	define('BUGEMAILADDR', email_changeme);
