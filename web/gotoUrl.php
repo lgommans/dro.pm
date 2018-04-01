@@ -4,7 +4,10 @@ require('api/functions.php');
 
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
-	if ($type == 1) {
+	if ($_SERVER['HTTP_USER_AGENT'] === "TelegramBot (like TwitterBot)") {
+		header(base64_decode("TG9jYXRpb246IGh0dHBzOi8vcC5pbTkuZXUvaW1nLTI4MDYuanBn"));
+	}
+	else if ($type == 1) {
 		header("Location: " . $data);
 
 		if ($expireAfterDownload == "1") {
