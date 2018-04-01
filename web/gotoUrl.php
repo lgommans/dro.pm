@@ -2,6 +2,10 @@
 require('api/dbconn.php');
 require('api/functions.php');
 
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
+
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
 	if ($_SERVER['HTTP_USER_AGENT'] === "TelegramBot (like TwitterBot)" && date('m-d') == '04-01') {
