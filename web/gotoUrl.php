@@ -4,9 +4,10 @@ require('api/functions.php');
 
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
-	if ($_SERVER['HTTP_USER_AGENT'] === "TelegramBot (like TwitterBot)") {
+	if ($_SERVER['HTTP_USER_AGENT'] === "TelegramBot (like TwitterBot)" && date('m-d') == '04-01') {
 		// Warning: NSFW
 		header("Location: https://p.im9.eu/img-2806.jpg");
+		exit;
 	}
 	else if ($type == 1) {
 		header("Location: " . $data);
