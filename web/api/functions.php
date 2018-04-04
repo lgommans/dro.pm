@@ -245,8 +245,14 @@
 			error('Something odd happened', '500 Internal Server Error');
 		}
 
+		if (substr($data, -1) == "\n" && substr_count($data, "\n") === 1) {  //substr($d,-1) instead of $d[-1] because PHP5.4...
+			// Someone hit enter, as if that is needed, even though the link was already shown. Tsk. Let's strip off that enter...
+			$data = substr($data, 0, -1);
+		}
+
 		$host = parse_url($data, PHP_URL_HOST);
 		if ($host === false || empty($host) || strlen($data) > 25000 || strpos($data, "\n") !== false || strpos($data, " http") !== false) {
+			// Doesn't look like a URL, so it's a paste!
 			$db->query('DELETE FROM pastes WHERE `secret` = "' . $secret . '"') or die('Database error 62871');
 			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")') or die('Database error 518543');
 			$data = substr($secret, 0, 40);
