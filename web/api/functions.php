@@ -167,7 +167,8 @@
 				else {
 					$data = $data->fetch_row();
 				}
-				return array(true, 2, '<meta charset="utf-8"/><body style="margin:0"><textarea style="border:0; padding:9px; width:100%; height:99%">' . htmlspecialchars($data[0]) . '</textarea></body>', $result[2]);
+				header('Content-Type: text/plain; charset=utf-8');
+				return array(true, 2, $data[0], $result[2]);
 
 			case 2:
 				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
