@@ -14,7 +14,8 @@ if ($status !== false) {
 		exit;
 	}
 	else if ($type == 1) {
-		header("Location: " . $data);
+		header('HTTP/1.1 307 Temporary Redirect');
+		header('Location: ' . $data);
 
 		if ($expireAfterDownload == "1") {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.");
