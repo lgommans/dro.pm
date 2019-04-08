@@ -52,7 +52,7 @@
 			</form>
 			<div style="margin-top: 40px; color: #fff;" id=info>
 				<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a> |
-				<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:bug()">Report a bug</a>
+				<a style="font-size: 12pt; color: rgb(0, 215, 251);" target="_blank" rel=noopener href="https://github.com/lgommans/dro.pm/issues">Report a bug</a>
 			</div>
 		</center>
 		<script>
@@ -237,19 +237,6 @@
 					+ '<br>'
 					+ 'You can also upload files from the command line:<br>'
 					+ '<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="http://pastebin.com/0u08fBr8">http://pastebin.com/0u08fBr8</a>';
-			}
-
-			function bug() {
-				$("info").innerHTML = // oops, I guess I shouldn't call this thing "info"
-					"Describe:<br>" +
-					"1. what steps you take;<br>" +
-					"2. what you expect to happen; and<br>" +
-					"3. what happens instead.<br>" +
-					"For example: 'I paste a link in the field. It seems to work and gives me dro.pm/a. When I visit dro.pm/a, it says the link does not exist.'<br>" +
-					"<br>" +
-					"Optionally you can include a way for me to contact you (email, twitter)." +
-					"<form action='bug.php' target='_blank' method=post><textarea name=bug cols=80 rows=5></textarea><br>" +
-					"<input type=submit value=Send></form>";
 			}
 
 			function showUrl() {
