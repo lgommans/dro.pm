@@ -42,32 +42,56 @@ wnat to monitor for / rate limit in the future.
 
 **License**
 
-For anything in the `web` folder, Dutch copyright applies with the exception
-that you may use this code and run it locally, as long as it is for the sole
-purpose of contributing back to the project. (Why bother publishing at all
-then? Well you are welcome to read the code and learn from it, plus you can
-contribute your own features to [dro.pm](http://dro.pm).)
+For anything in the `web` folder, EU copyright applies. You may use this code and run it locally
+for the sole purpose of contributing back to the project. Maybe this will one day go commercial
+(I really like the idea but don't have the time to expand it right now) so I don't want to just
+give it away without you at least having to rewrite it. So why do I publish it at all? Because
+I think we all benefit from being able to see the code (privacy and security wise), you are
+welcome to read the code and learn from it, and you can contribute your own features to
+[dro.pm](http://dro.pm) which I will happily host for you!
 
 For anything in the `android` folder, see the `android/dropm.luc/README.md` file.
 
 **To do**
 
-There are many ideas I have for this project, but many are either hard to place in the UI or I just
-don't have time to build them. The main one is making longer links valid for a longer time. The idea
-was that validity could go up to forever with 7 characters or more, but I'm not even sure anymore
-whether that is a good idea. The main feature of this site is expiring old garbage and there are
-plenty of sites where you can generate life-long and custom URLs on a FCFS basis. If there are links
-valid for a week or more, abuse handling might have to become much more important, whereas I can
-pretty much ignore that completely now.
+There are many ideas I have for this project, but most are hard to place in the UI. The main feature
+I still want to integrate, is making longer links valid for a custom time period. The original idea
+was that validity could go up to forever with 7 characters or more, but I'm no longer sure that's a
+good idea. The main feature of this site is expiring old garbage and there are plenty of sites where
+you can generate life-long and custom URLs on a FCFS basis. The time limits would probably be
+something like between 2 seconds and 2 weeks.
 
-Another idea includes a manager where you can add links, text and files, and people opening the link
-can pick what they want to open. An example case for this would be a classroom setting. Here it
-would also be useful to give a store/load option, where the collective page can be downloaded and
-loaded back into a new link later.
+Another idea includes a manager where you have one link behind which there is an overview of links,
+texts (pastes), and files, and people opening the link can pick from the menu what they want to open.
+An example case for this would be a classroom setting, where the teacher generates a link the first
+time s/he needs it and adds more resources to it later. Here, it would also be useful to give a
+store/load option, where the collective page can be downloaded. And, after downloading, maybe also
+load it back into a new link later, for example for the next session.
 
-And finally, arbitrarily large files transferred peer to peer. WebRTC or TCP hole punching, something
-fancy will have to be done for this, but people could transfer files without them having to be
-stored on the server, even encrypted. The drawback here is UX: telling people to leave the tab open
-and that the URL will expire as soon as they close it (and it becomes unavailable) is not very user
-friendly.
+An API would also be neat. There sort-of already is one, but I'd like to formalize it and to make it
+better.
 
+The client (that is, the website) currently does not warn you when your secret token has expired,
+i.e. when you can no longer manage your link. This happens when your link expired (for example
+because it was empty and you left the tab open for a few hours).
+
+The Android app does not allow sharing text or URLs, and there should be a 'remove' button. It could
+have an overview of currently valid links and allow you to remove those. And it does not allow custom
+links yet.
+
+It would also be cool to have better command line support, where the program remembers your last
+tokens and you don't have to copy/paste them from previous output. And upload progress.
+
+Finally, I would like to transfer arbitrarily large files peer to peer. WebRTC or TCP hole punching,
+something fancy will have to be done for this, but people could transfer files without them having to
+be stored on the server, even encrypted. The drawback here is UX: telling people to leave the tab
+open and that the URL will expire as soon as they close it (and it becomes unavailable) is not very
+user friendly. The text should be clear and concise when this is the case. The user should, for small
+files, also be able to use the traditional method. Another UI challenge: how to give the user that
+option (it should probably be the default) without making everything more difficult when you do not
+want to have to answer ten questions in order to share something?
+
+Feel free to work on any of this. Things like expanding Android app or checking whether a token is still
+valid are straightforward, but before you commit large chunks of your time to something like UI problems,
+be sure to bounce ideas off of me first! I want to keep the product useful for everyone and myself,
+and that means applying quality control.
