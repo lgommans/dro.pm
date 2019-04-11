@@ -55,25 +55,23 @@ if ($status !== false) {
 <br>
 <h3><img src='res/img/loading.gif'/> Loading...</h3>
 <br/>
-<i>What is going on?</i><br>
-You have visited a link that is not (yet?) available. We are waiting for it to be updated.<br>
-So far this is taking <span id='secs'>0</span> seconds. You should close the page if it takes too long.<br>
+You have visited a link that is not (yet?) available. Usually, the sender is still uploading the file. We are waiting for it to become available.<br>
+<br>
+<span id='lastcheck'></span>
+<noscript><font color=red>JavaScript is disabled. Could not check for update.</font></noscript>
 
 <script>
-	t = 300;
-	
-	setInterval(function() {
-		document.getElementById("secs").innerHTML++;
-	}, 1000);
-	
+	t = 350;
+
 	function checkForUpdate() {
+		document.getElementById('lastcheck').innerText += ' Checking for update...';
 		aGET('api/v1/check/<?php echo htmlspecialchars($_GET['shortcode']); ?>', function(data) {
 			if (data == '1') {
 				location.reload();
 			}
 			else {
-				t = Math.min(1750, t + 50);
-				setTimeout(checkForUpdate, t);
+				document.getElementById('lastcheck').innerText = 'Last check: ' + new Date().toLocaleTimeString() + '.';
+				setTimeout(checkForUpdate, t *= 1.1);
 			}
 		});
 	}
@@ -90,10 +88,4 @@ So far this is taking <span id='secs'>0</span> seconds. You should close the pag
 	
 	checkForUpdate();
 </script>
-
-<br>
-<br>
-While you are waiting, would you perhaps enjoy a game of Escapa?<br>
-<br>
-<iframe src='//lucb1e.com/rp/randomupload/escapa.html' width="475" height="475" border="0" frameborder="no"></iframe>
 
