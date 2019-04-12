@@ -19,6 +19,9 @@
 			list($secret, $key) = allocate();
 			$retval = "$secret dro.pm/$key";
 		}
+		else {
+			die('Missing required parameter.');
+		}
 	}
 	else {
 		$secret = $db->escape_string($_GET['secret']);
