@@ -48,10 +48,10 @@
 	}
 
 	function getAllowedCharset() {
-		$allowedCharSet = 'a-hj-km-z2-9';
+		$allowedCharSet = 'a-hj-km-np-z2-9';
 		$chars = array();
 		for ($i = 0; $i < strlen($allowedCharSet); $i += 3) {
-			for ($j = ord($allowedCharSet[$i]); $j < ord($allowedCharSet[$i + 2]); $j++) {
+			for ($j = ord($allowedCharSet[$i]); $j <= ord($allowedCharSet[$i + 2]); $j++) {
 				$chars[] = chr($j);
 			}
 		}
