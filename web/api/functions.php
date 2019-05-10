@@ -16,7 +16,7 @@
 				$db->query('DELETE FROM shorts WHERE `key` = "' . $db->escape_string($code) . '"') or die('Database error 95184');
 			}
 			if ($exists === true) {
-				return [true];
+				return [true, $code];
 			}
 			else {
 				$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $db->escape_string($code) . "', -1, '', " . (time() + 900) . ", '" . $secret . "')") or die('Database error 81935');
@@ -84,7 +84,7 @@
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `expires` < " . time());
 		if ($result->num_rows > 0) {
 			while ($row = $result->fetch_row()) {
-				$data = unserialize($row[0]);
+				$data = json_decode($row[0], true);
 				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
 					$dir = 'uploads/';
 				}
@@ -177,7 +177,7 @@
 				else {
 					$dir = '../uploads/';
 				}
-				$metadata = unserialize($result[1]);
+				$metadata = json_decode($result[1], true);
 				$ext = strtolower(pathinfo($metadata['original_filename'], PATHINFO_EXTENSION));
 				if ($ext == 'jpg' || $ext == 'png' || $ext == 'bmp'|| $ext == 'gif') {
 					return array(true, 3, array($ext, $dir . $metadata['filename'], $metadata['original_filename']), $result[2]);
@@ -196,7 +196,7 @@
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `secret` = '" . $db->escape_string($secret) . "'");
 		if ($result->num_rows > 0) {
 			$row = $result->fetch_row();
-			$data = unserialize($row[0]);
+			$data = json_decode($row[0], true);
 			if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
 				$dir = 'uploads/';
 			}
@@ -219,7 +219,7 @@
 		return $secret;
 	}
 
-	function api_set($secret = false, $data = false, $expireAfterDownload = false) {
+	function api_set($secret = false, $data = false, $expireAfterDownload = false, $noecho = false) {
 		global $db;
 		if ($secret === false) {
 			if (!isset($_GET['secret'])) {
@@ -241,6 +241,9 @@
 
 		if (empty($data)) {
 			if (clearUrl($secret)) {
+				if ($noecho) {
+					exit;
+				}
 				die('1');
 			}
 			error('Something odd happened', '500 Internal Server Error');
@@ -271,6 +274,9 @@
 			. 'WHERE secret = "' . $db->escape_string($secret) . '"')
 			or die("Database error 28943");
 
+		if ($noecho) {
+			exit;
+		}
 		die('1');
 	}
 
