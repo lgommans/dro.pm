@@ -1,3 +1,7 @@
+<!--
+function dropm { result=$(curl -sS --user-agent cli --form "f=@$1" "https://dro.pm/fileman.php?secret=$2"); if [ "$result" == "1" ]; then echo Done; return; fi; echo "$result"; }
+You can easily import this using: """source <(curl https://dro.pm | head -2 | tail -1)""" (without quotes). See http://pastebin.com/0u08fBr8 for more information.
+-->
 <!DOCTYPE html>
 <html>
 	<head>
@@ -12,20 +16,18 @@
 		<center>
 			<div id="tabs">
 				<div class="tab" id="tabBtn1" onclick="tab(1);">
-					Share via link
+					Short link
 				</div>
 				<div class="tab unselected" id="tabBtn2" onclick="tab(2);">
-					Send to device
+					Custom link
 				</div>
 			</div>
 			<span id="sendToDevice" style="display: none; margin-bottom: 20px; font-size: 14pt;">
-				<i>New: sending a link, file or text to another device!<br></i>
-				<span id="toDeviceInfo"><a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:toDeviceInfo()">More info about this feature.</a></span>
 				<br><br><br>
-				<span style="font-weight: bold; font-size: 30pt;">1. Recipient</span><br>
-				Type any name: <input maxlength=250 id=recipient> <span id=recipientValidation></span>
+				<span style="font-weight: bold; font-size: 30pt;">1. Choose your link</span><br>
+				<input maxlength=250 id=customLink> <span id=customLinkValidation></span>
 				<br><br>
-				<label><input type=checkbox id=expireAfterFirstDownload checked=checked> Expire link immediately after opening</label>
+				<label><input type=checkbox id=expireAfterFirstDownload> Delete contents immediately after opening</label>
 				<br><br>
 			</span>
 			<div id="action" style="font-size: 30pt; font-weight: bold;">Loading...</div>
@@ -152,7 +154,7 @@
 								t = "Your short link:";
 							}
 							else {
-								t = "Send this link to the recipient:";
+								t = "Your custom link:";
 							}
 							$("action").innerHTML = "All done!<br>" + t;
 						}
@@ -168,10 +170,10 @@
 				}, 750);
 			};
 
-			$("recipient").onkeyup =
-			$("recipient").onmouseup =
-			$("recipient").onchange = function() {
-				var r = $("recipient").value;
+			$("customLink").onkeyup =
+			$("customLink").onmouseup =
+			$("customLink").onchange = function() {
+				var r = $("customLink").value;
 				if (r == customUrl) {
 					return; // Nothing changed.
 				}
@@ -208,20 +210,25 @@
 								secret = data[1];
 								setUrl(data[2]);
 								secretsDB['customurls'][data[2]] = {"taken": false, "secret": data[1]};
-								if (customUrl == $("recipient").value) {
-									$("recipientValidation").innerHTML = green("Looks good!");
+								if (customUrl == $("customLink").value) {
+									$("customLinkValidation").innerHTML = green("Looks good!");
 								}
 							}
 							else {
-								secretsDB['customurls'][r] = {"taken": true};
-								if (customUrl == $("recipient").value) {
-									$("recipientValidation").innerHTML = red("Already taken.");
+								if (secretsDB['customurls'][data[1]]) {
+									// We already have it?! Gotta love async callbacks.
+									console.log('async warn 2');
+									return;
+								}
+								secretsDB['customurls'][data[1]] = {"taken": true};
+								if (customUrl == $("customLink").value) {
+									$("customLinkValidation").innerHTML = red("Already taken.");
 								}
 							}
 						}, errorHandler);
 					}
 				}
-				$("recipientValidation").innerHTML = judgement;
+				$("customLinkValidation").innerHTML = judgement;
 			};
 
 			function info() {
@@ -304,7 +311,7 @@
 
 			function setData(to) {
 				if (secret === false) {
-					errorHandler("Internal sanity check failed. We're sorry but this is not going to fly. Please try again.");
+					errorHandler("Loading, hold on (try that again in half a second)...");
 					return;
 				}
 				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Your link will be:";
@@ -315,7 +322,7 @@
 							$("action").innerHTML = "Your short link:";
 						}
 						else {
-							$("action").innerHTML = "Send this link to the recipient:";
+							$("action").innerHTML = "Your custom link:";
 						}
 					}
 				}, errorHandler);
@@ -366,13 +373,6 @@
 				}, errorHandler);
 			}
 
-			function toDeviceInfo() {
-				$("toDeviceInfo").innerHTML = "Often you want to share something just with one person, or even yourself. Normal short links are guessable and take hours to expire; "
-					+ "this feature will automatically remove your data after the recipient opened it, and you can pick whom should receive it so a password is not needed.<br><br>"
-					+ "<img src='res/img/dropm-2device.gif' style='border: 1px solid #DDD;'/>";
-				$("toDeviceInfo").style.color = "white";
-			}
-
 			allocateURI();
 		</script>
 		<style>
@@ -420,7 +420,7 @@
 			}
 			#tabs {
 				height: 80px;
-				width: 400px;
+				width: 320px;
 			}
 			.tab {
 				padding-top: 8px;
