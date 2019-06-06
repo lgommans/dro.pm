@@ -34,7 +34,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			<div id="url" style="display:none"></div>
 			<div id="error" style="display:none"></div>
 			<form method="POST" action="nojs.php">
-				<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;"></textarea>
+				<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;overflow:auto;"></textarea>
 				<noscript>
 					<input type="submit" value="Shorten!"><br>
 					<br>
@@ -178,8 +178,8 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					return; // Nothing changed.
 				}
 
-				var red = function(t) { return "<font color='#f00'>" + t + "</font>"; }
-				var green = function(t) { return "<font color='#0f0'>" + t + "</font>"; }
+				var red = function(t) { return "<span style='color:#f00'>" + t + "</span>"; }
+				var green = function(t) { return "<span style='color:#0f0'>" + t + "</span>"; }
 				var judgement = "";
 				if (secretsDB['customurls'][r] && !secretsDB['customurls'][r]['taken']) {
 					customUrl = r;
