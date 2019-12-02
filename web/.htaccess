@@ -1,8 +1,9 @@
-ErrorDocument 404 "Page not found. To contact the admin, see lgms.nl"
+ErrorDocument 404 "Page not found. To contact the admin, see lgms.nl or use github.com/lgommans/dro.pm/issues"
 
 RewriteEngine On
 RewriteRule ^$ frontpage.htm [END]
 RewriteRule ^fileman.php fileman.php [END]
 RewriteRule ^bug.php bug.php [END]
-RewriteRule ^([a-z0-9A-Z]{1,250})(\.[a-zA-Z0-9.]{0,10})?/?$ gotoUrl.php?shortcode=$1 [END]
+RewriteRule ^([a-z0-9A-Z]{1,250})(\.([a-zA-Z0-9.]{0,10}))?/?$ gotoUrl.php?shortcode=$1&ext=$3 [END]
+RewriteRule ^([a-z0-9A-Z]{1,250})(\.([a-zA-Z0-9.]{0,10}))?/(preview|view)$ gotoUrl.php?shortcode=$1&ext=$3&preview [END]
 
