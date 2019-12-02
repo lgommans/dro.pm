@@ -6,7 +6,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>dro.pm url shortener</title>
+		<title>dro.pm - Extremely Short Links</title>
 	</head>
 	<body>
 		<div id="topbar">
@@ -33,17 +33,17 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			<div id="action" style="font-size: 30pt; font-weight: bold;">Loading...</div>
 			<div id="url" style="display:none"></div>
 			<div id="error" style="display:none"></div>
-			<form method="POST" action="nojs.php">
+			<div>
 				<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;overflow:auto;"></textarea>
 				<noscript>
 					<input type="submit" value="Shorten!"><br>
 					<br>
-					<font color="red">
+					<span style="color:red">
 						Note: Javascript is off. This website will not work currently.<br>
 						There has been no demand for a no-Javascript version yet, let me know if you require one!
-					</font>
+					</span>
 				</noscript>
-			</form>
+			</div>
 			<br>
 			<form method="POST" enctype="multipart/form-data" action="nojs.php" id="fileform">
 				Or upload a file: <input type="file" name="f" id="f">
@@ -59,7 +59,9 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 		</center>
 		<script>
 // TODO: reAllocate shortcode if t>60s
-// TODO: !javascript
+// TODO: update pastebin thingy
+			msg_loadingLink = "Loading your link...";
+
 			function $(id){ return document.getElementById(id); }
 			$("action").innerHTML = "Press Ctrl + V<span style='font-size: 15pt;position:relative;top:-25px;'><br>to paste your link or text</span>";
 			$("toshorten").focus();
@@ -139,7 +141,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + expireAfterFirstDownload(true);
 					$("fileform").target = "fileframe";
 					$("fileform").submit();
-				}, 50);
+				}, 90);
 
 				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Uploading...<br>your link will be:";
 				showUrl();
@@ -147,19 +149,19 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				t = 400;
 
 				function checkForUpdate() {
-					aGET('api/v1/check/' + url.replace('dro.pm/', ''), function(data) {
+					aGET('api/v1/check/' + url.replace((location.hostname.indexOf('beta.') != -1 ? 'beta.' : '') + 'dro.pm/', ''), function(data) {
 						if (data == '1') {
-							var t = "";
+							var text = "";
 							if (customUrl === false) {
-								t = "Your short link:";
+								text = "Your short link:";
 							}
 							else {
-								t = "Your custom link:";
+								text = "Your custom link:";
 							}
-							$("action").innerHTML = "All done!<br>" + t;
+							$("action").innerHTML = "All done!<br>" + text;
 						}
 						else {
-							t = Math.min(1750, t + 50);
+							t = Math.min(2750, t + 25);
 							setTimeout(checkForUpdate, t);
 						}
 					});
@@ -203,7 +205,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					else {
 						judgement = "Loading...";
 						aGET('api/v2/allocate/' + escape(r), function(data) {
-							data = eval(data);
+							data = JSON.parse(data);
 							var taken = data[0];
 							if (!taken) {
 								customUrl = data[2];
@@ -247,7 +249,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 
 			function showUrl() {
-				var html = '<span style="display:inline-block">' + url + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
+				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
 					+ '<div class="urlSubtitle">(Works for 12 hours)</div>';
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
@@ -259,7 +261,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 
 			function setUrl(shortcode) {
-				url = "dro.pm/" + shortcode;
+				url = (location.hostname.indexOf('beta.') != -1 ? 'beta.' : '') + "dro.pm/" + shortcode;
 				if (urlShown) {
 					showUrl(url);
 				}
@@ -311,7 +313,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 
 			function setData(to) {
 				if (secret === false) {
-					errorHandler("Loading, hold on (try that again in half a second)...");
+					errorHandler(msg_loadingLink);
 					return;
 				}
 				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Your link will be:";
@@ -366,11 +368,20 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 
 			function allocateURI() {
 				aPOST('api/v1/allocate', '', function(data) {
-					data = eval(data);
+					data = JSON.parse(data);
 					setUrl(data[1]);
 					secret = data[0];
 					secretsDB['shorturl'] = {'secret': secret, 'url': data[1]};
+					if ($("error").innerHTML == msg_loadingLink) {
+						setData($("toshorten").value);
+						clearError();
+					}
 				}, errorHandler);
+			}
+
+			function clearError() {
+				$("error").innerHTML = '';
+				$("error").style.display = 'none';
 			}
 
 			allocateURI();
