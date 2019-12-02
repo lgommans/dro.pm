@@ -5,7 +5,7 @@
 	function allocate($code = false, $ApiVersion = 1) {
 		global $db;
 
-		$secret = bin2hex(openssl_random_pseudo_bytes(20));
+		$secret = substr(hash('sha256', openssl_random_pseudo_bytes(20)), 0, 40);
 		if (empty($code)) {
 			$code = getNewCode($secret);
 		}
@@ -48,6 +48,8 @@
 	}
 
 	function getAllowedCharset() {
+		return ["a","b","c","d","e","f","g","h","j","k","m","n","p","q","r","s","t","u","v","w","x","y","z","2","3","4","5","6","7","8","9"]; // upon modifying the code below, be sure to update this value ;)
+
 		$allowedCharSet = 'a-hj-km-np-z2-9';
 		$chars = array();
 		for ($i = 0; $i < strlen($allowedCharSet); $i += 3) {
@@ -62,34 +64,35 @@
 		$chars = getAllowedCharset();
 		$shorts = [];
 		foreach ($chars as $char1) {
-			$shorts[] = $char1;
+			yield $char1;
 		}
 		foreach ($chars as $char1) {
 			foreach ($chars as $char2) {
-				$shorts[] = $char1 . $char2;
+				yield $char1 . $char2;
 			}
 		}
 		foreach ($chars as $char1) {
 			foreach ($chars as $char2) {
 				foreach ($chars as $char3) {
-					$shorts[] = $char1 . $char2 . $char3;
+					yield $char1 . $char2 . $char3;
 				}
 			}
 		}
-		return $shorts;
+		yield false;
 	}
 
-	function getNewCode($secret) {
-		global $db;
+	function cleanup() {
+		global $db, $uploaddir;
+
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `expires` < " . time());
 		if ($result->num_rows > 0) {
 			while ($row = $result->fetch_row()) {
 				$data = json_decode($row[0], true);
 				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
-					$dir = 'uploads/';
+					$dir = $uploaddir . '/';
 				}
 				else {
-					$dir = '../uploads/';
+					$dir = "../$uploaddir/";
 				}
 				@unlink($dir . $data['filename']);
 			}
@@ -98,30 +101,44 @@
 		if (rand(1, 10) == 5) {
 			$db->query("DELETE FROM pastes WHERE NOT EXISTS (SELECT secret FROM shorts WHERE shorts.`secret` = pastes.`secret`)");
 		}
+	}
 
-		// Get all possible shortcodes
-		$possibleCodes = array_flip(getAllowedShorts());
+	function getNewCode($secret) {
+		global $db;
 
-		// Now remove all used ones
+		cleanup();
+
+		// Get all used shortcodes
+		$results = [];
 		$result = $db->query("SELECT `key` FROM shorts") or die('Database error 2539');
 		while ($row = $result->fetch_row()) {
-			if (isset($possibleCodes[$row[0]])) {
-				unset($possibleCodes[$row[0]]);
+			$results[$row[0]] = true;
+		}
+
+		// Find the first one that's free
+		$generator = getAllowedShorts();
+		foreach ($generator as $code) {
+			if (!isset($results[$code])) break;
+		}
+
+		if ($code === false) {
+			error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
+		}
+
+		$result = false;
+		$i = 0;
+		while (!$result && $i++ < 10) {
+			if ($code === false || $generator->valid() === false) {
+				error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
+			}
+			$result = @$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $code . "', -1, '', " . (time() + 180) . ", '" . $secret . "')");
+			if (!$result) { // duplicate key, most likely
+				foreach (range(0, mt_rand(1, 5)) as $useless) {
+					$generator->next();
+				}
+				$code = $generator->current();
 			}
 		}
-
-		// Are there any left? (I.e. are there possible shortcodes that are unused?)
-		if (count($possibleCodes) == 0) {
-			error('No more shortcodes available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
-		}
-
-		// Take the first one
-		foreach ($possibleCodes as $possibleCode=>$useless) {
-			$code = $possibleCode;
-			break;
-		}
-
-		$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $code . "', -1, '', " . (time() + 180) . ", '" . $secret . "')") or die('Database error 15735'.$db->error);
 
 		return $code;
 	}
@@ -141,7 +158,7 @@
 	// Where dataAvailable = true when there is data, false when there is no data, or string "2" when there is an error
 	// Where dataType = 1 for redirect, 2 for html to display or 3 for a file download
 	function tryGet($shortcode, $checkExists = false) {
-		global $db;
+		global $db, $uploaddir;
 
 		$result = $db->query('SELECT `type`, `value`, `expireAfterDownload` FROM shorts WHERE `key` = "' . $db->escape_string($shortcode) . '" AND `value` != "" AND `expires` > ' . time()) or die('Database error 53418');
 		if ($result->num_rows != 1) {
@@ -167,24 +184,24 @@
 				else {
 					$data = $data->fetch_row();
 				}
-				header('Content-Type: text/plain; charset=utf-8');
+				//$html = '<meta charset="utf-8"/><body style="margin:0"><textarea style="border:0; padding:9px; width:100%; height:99%">' . htmlspecialchars($data[0]) . '</textarea></body>';
+				//if ($_GET['ext'] == 'raw' || $_GET['ext'] == 'txt') {
+					header('Content-Type: text/plain; charset=utf-8');
+					//$html = $data[0];
+				//}
+				//return array(true, 2, $html, $result[2]);
 				return array(true, 2, $data[0], $result[2]);
 
 			case 2:
 				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
-					$dir = 'uploads/';
+					$dir = $uploaddir . '/';
 				}
 				else {
-					$dir = '../uploads/';
+					$dir = "../$uploaddir/";
 				}
 				$metadata = json_decode($result[1], true);
-				$ext = strtolower(pathinfo($metadata['original_filename'], PATHINFO_EXTENSION));
-				if ($ext == 'jpg' || $ext == 'png' || $ext == 'bmp'|| $ext == 'gif') {
-					return array(true, 3, array($ext, $dir . $metadata['filename'], $metadata['original_filename']), $result[2]);
-				}
-				else {
-					return array(true, 3, array('file', $dir . $metadata['filename'], $metadata['original_filename']), $result[2]);
-				}
+
+				return array(true, 3, array($dir . $metadata['filename'], $metadata['original_filename']), $result[2]);
 
 			default:
 				return array('2', 2, 'There is something funny about this link of yours', $result[2]);
@@ -192,16 +209,17 @@
 	}
 
 	function clearUrl($secret) {
-		global $db;
+		global $db, $uploaddir;
+
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `secret` = '" . $db->escape_string($secret) . "'");
 		if ($result->num_rows > 0) {
 			$row = $result->fetch_row();
 			$data = json_decode($row[0], true);
 			if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
-				$dir = 'uploads/';
+				$dir = $uploaddir . '/';
 			}
 			else {
-				$dir = '../uploads/';
+				$dir = "../$uploaddir/";
 			}
 			unlink($dir . $data['filename']);
 		}
