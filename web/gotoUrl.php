@@ -8,9 +8,8 @@ header('Expires: 0');
 
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
-    if ($_SERVER['HTTP_USER_AGENT'] === "TelegramBot (like TwitterBot)" && date('m-d') == '04-01') {
-        // Warning: NSFW
-        header("Location: https://p.im9.eu/img-2806.jpg");
+    if ($_SERVER['HTTP_USER_AGENT'] === 'TelegramBot (like TwitterBot)') {
+        header('HTTP/1.1 204 No Content For You My Caching Friend');
         exit;
     }
     else if ($type == 1) {
@@ -72,7 +71,7 @@ if ($status !== false) {
 <br>
 <h3><img src='res/img/loading.gif'/> Loading...</h3>
 <br/>
-You have visited a link that is not (yet?) available. Usually, the sender is still uploading the file. We are waiting for it to become available.<br>
+You found an empty link. It exists, but there is no content (yet). Usually, the sender is still uploading the file. We are waiting for the content to become available.<br>
 <br>
 <span id='lastcheck'></span>
 <noscript><font color=red>JavaScript is disabled. Could not check for update.</font></noscript>
@@ -142,7 +141,7 @@ mCol='#00aa00';   //minutes colour.
 hCol='#00aa00';   //hours colour.
 
 // *** Controls
-del=0.6;  //Follow mouse speed.
+del=0.8;  //Follow mouse speed.
 ref=40;   //Run speed (timeout).
 
 //  Alter nothing below!  Alignments will be lost!
