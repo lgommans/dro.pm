@@ -184,6 +184,7 @@
 				else {
 					$data = $data->fetch_row();
 				}
+				// TODO remove this old code =)
 				//$html = '<meta charset="utf-8"/><body style="margin:0"><textarea style="border:0; padding:9px; width:100%; height:99%">' . htmlspecialchars($data[0]) . '</textarea></body>';
 				//if ($_GET['ext'] == 'raw' || $_GET['ext'] == 'txt') {
 					header('Content-Type: text/plain; charset=utf-8');
@@ -223,8 +224,7 @@
 			}
 			unlink($dir . $data['filename']);
 		}
-		$db->query('UPDATE `shorts` SET `type` = -1, `value` = "", `expires` = ' . (time() + 300) . ' WHERE `secret` = "' . $db->escape_string($secret) . '"') or die("Database error 83293");
-		return true;
+		$db->query('UPDATE `shorts` SET `type` = -1, `value` = "", `expires` = ' . (time() + 600) . ' WHERE `secret` = "' . $db->escape_string($secret) . '"') or die("Database error 83293");
 	}
 
 	function getSecretByCode($code) {
@@ -235,6 +235,55 @@
 		}
 		$secret = $result->fetch_row()[0];
 		return $secret;
+	}
+
+	function move($oldsecret, $newsecret) {
+		// Note: this is totally raceable but the person calling this has both secrets. If they want inconsistent states on their own links, whatever.
+		global $db;
+
+		if ($oldsecret == $newsecret) {
+			error('This violates the definition of moving.');
+		}
+
+		$oldsecret = $db->escape_string($oldsecret);
+		$newsecret = $db->escape_string($newsecret);
+
+		$result = $db->query('SELECT `type` FROM `shorts` WHERE `secret` = "' . $oldsecret . '"') or die('Database error 585193');
+		if ($result->num_rows != 1) {
+			error('Old secret not found');
+		}
+
+		$type = $result->fetch_row()[0];
+		if ($type == -1) {
+			error("Can't move an empty link");
+		}
+
+		$result = $db->query('SELECT `type` FROM `shorts` WHERE `secret` = "' . $newsecret . '"') or die('Database error 995193');
+		if ($result->num_rows != 1) {
+			error('New secret not found');
+		}
+
+		if ($result->fetch_row()[0] != -1) {
+			error('New secret already filled');
+		}
+
+		$db->query("UPDATE `shorts` SET
+			`type` = (SELECT `type` FROM `shorts` WHERE `secret` = '$oldsecret'),
+			`value` = (SELECT `value` FROM `shorts` WHERE `secret` = '$oldsecret'),
+			`expireAfterDownload` = (SELECT `expireAfterDownload` FROM `shorts` WHERE `secret` = '$oldsecret')
+			WHERE `secret` = '$newsecret'") or die('Database error 131324');
+		$db->query("UPDATE `shorts` SET `type` = -1, value = '' WHERE `secret` = '$oldsecret'") or die('Database error 173754');
+		$db->query("UPDATE `pastes` SET `secret` = '$newsecret' WHERE `secret` = '$oldsecret'") or die('Database error 848299'.$db->error);
+	}
+
+	function setExpireAfterDownload($secret, $expireAfterDownload) {
+		global $db;
+
+		if ($expireAfterDownload != '0' && $expireAfterDownload != '1') {
+			error('Invalid internal call', '500 Internal Server Error');
+		}
+
+		$db->query("UPDATE `shorts` SET expireAfterDownload = $expireAfterDownload WHERE secret = '" . $db->escape_string($secret) . "'") or die('Database error 848493');
 	}
 
 	function api_set($secret = false, $data = false, $expireAfterDownload = false, $noecho = false) {

@@ -27,18 +27,24 @@
 		case 'set':
 			api_set();
 
+		case 'setExpireAfterDownload':
+			setExpireAfterDownload($_GET['secret'], $_GET['expireAfterDownload'] == 'false' ? '0' : '1');
+			die('1');
+
 		case 'check':
 			check();
 
 		case 'extend':
 			extend();
 
+		case 'move':
+			move($_GET['oldsecret'], $_GET['newsecret']);
+			die('1');
+
 		case 'clear':
 			$secret = $db->escape_string($_GET['secret']);
-			if (clearUrl($secret)) {
-				die("1");
-			}
-			error('Something odd happened', '500 Internal Server Error');
+			clearUrl($secret);
+			die('1');
 
 		default:
 			error('Unknown command or no command specified');

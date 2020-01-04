@@ -71,6 +71,10 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			var currentTab = 1;
 			var customUrl = false;
 			var secret = false;
+			var uploadedToSecrets = [];
+			var uploadedFile = false; // whether we uploaded a file or text/url
+
+			var imgLoading = "<img src='res/img/loading-dark.gif' height='25'/> ";
 
 			var secretsDB = {"shorturl": {}, "customurls": {}};
 
@@ -95,7 +99,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 
 			$("toshorten").onblur = function(force) {
 				if ($("toshorten").value.length == 0 || force === true) {
-					var t = (customUrl === false ? "" : "2. ");
+					var t = (currentTab == 1 ? "" : "2. ");
 					$("action").innerHTML = t + "Share text, a link or a file<br>&nbsp;";
 				}
 			};
@@ -127,7 +131,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					}
 				}
 				if (prevval != $("toshorten").value) {
-					setData($("toshorten").value);
+					uploadText();
 				}
 				prevval = $("toshorten").value;
 			};
@@ -138,12 +142,18 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				setTimeout(function() {
 					// Delay a little bit of time to make sure the previous request went on the network already, and preceeds this one on the server (should we do sequence numbers maybe?).
 					aGET('api/v1/extend/' + secret + '/900', function(){}); // Reserve the link for 15 minutes so it can upload
-					$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + expireAfterFirstDownload(true);
+					$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload();
 					$("fileform").target = "fileframe";
 					$("fileform").submit();
+					uploadedFile = true;
+					$("fileframe").onload = function() {
+						// because clearing it before the upload completed would just be overwritten
+						uploadedToSecrets.push(secret);
+						clearOldUrls();
+					}
 				}, 90);
 
-				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Uploading...<br>your link will be:";
+				$("action").innerHTML = imgLoading + "Uploading...<br>your link will be:";
 				showUrl();
 
 				t = 400;
@@ -171,6 +181,25 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					checkForUpdate();
 				}, 750);
 			};
+
+			$("expireAfterFirstDownload").onchange = function() {
+				if (secret === false) {
+					return;
+				}
+
+				if (!uploadedFile && $("toshorten").value.length > 0 && !$("expireAfterFirstDownload").checked) {
+					// Contents are deleted after expiry, so for the case it already expired, we need to re-upload
+					uploadText();
+				}
+				else {
+					if ($("action").innerHTML.indexOf(imgLoading) == -1) {
+						$("action").innerHTML = imgLoading + $("action").innerHTML;
+					}
+					aGET('/api/v1/setExpireAfterDownload/' + secret + '/' + shouldExpireAfterFirstDownload(), function() {
+						$("action").innerHTML = $("action").innerHTML.substring(imgLoading.length - 1);
+					});
+				}
+			}
 
 			$("customLink").onkeyup =
 			$("customLink").onmouseup =
@@ -204,6 +233,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					}
 					else {
 						judgement = "Loading...";
+						secret = false;
 						aGET('api/v2/allocate/' + escape(r), function(data) {
 							data = JSON.parse(data);
 							var taken = data[0];
@@ -218,14 +248,12 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 							}
 							else {
 								if (secretsDB['customurls'][data[1]]) {
-									// We already have it?! Gotta love async callbacks.
-									console.log('async warn 2');
+									// We already have it, we apparently sent a duplicate request
 									return;
 								}
 								secretsDB['customurls'][data[1]] = {"taken": true};
-								if (customUrl == $("customLink").value) {
-									$("customLinkValidation").innerHTML = red("Already taken.");
-								}
+								secret = false;
+								$("customLinkValidation").innerHTML = red("Already taken.");
 							}
 						}, errorHandler);
 					}
@@ -249,6 +277,8 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 
 			function showUrl() {
+				if (!secret) return;
+
 				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
 					+ '<div class="urlSubtitle">(Works for 12 hours)</div>';
 				if (html != $("url").innerHTML) {
@@ -260,10 +290,18 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				urlShown = true;
 			}
 
-			function setUrl(shortcode) {
+			function setUrl(shortcode, dontClearOldUrls) {
 				url = (location.hostname.indexOf('beta.') != -1 ? 'beta.' : '') + "dro.pm/" + shortcode;
 				if (urlShown) {
 					showUrl(url);
+				}
+
+				if (!dontClearOldUrls) {
+					clearOldUrls();
+				}
+
+				if (!uploadedFile && customUrl && $("toshorten").value.length > 0) {
+					uploadText();
 				}
 			}
 
@@ -301,24 +339,26 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				$("error").innerHTML = message;
 			}
 
-			function expireAfterFirstDownload(str) {
+			function shouldExpireAfterFirstDownload(str) {
 				if (currentTab != 2) {
 					return (str ? "false" : false);
 				}
-				if (str) {
-					return $("expireAfterFirstDownload").checked ? "true" : "false";
-				}
-				return $("expireAfterFirstDownload").checked;
+				return $("expireAfterFirstDownload").checked ? "true" : "false";
 			}
 
-			function setData(to) {
+			function uploadText() {
 				if (secret === false) {
-					errorHandler(msg_loadingLink);
+					if (currentTab == 1) {
+						errorHandler(msg_loadingLink);
+					}
 					return;
 				}
-				$("action").innerHTML = "<img src='res/img/loading-dark.gif' height='25'/> Your link will be:";
+				uploadedFile = false;
+				$("action").innerHTML = imgLoading + "Your link will be:";
 				showUrl();
-				aPOST('api/v2/set/' + secret + '/' + expireAfterFirstDownload(true), to, function(data) {
+				aPOST('api/v2/set/' + secret + '/' + shouldExpireAfterFirstDownload(), $("toshorten").value, function(data) {
+					uploadedToSecrets.push(secret);
+					clearOldUrls();
 					if (data == '1') {
 						if (customUrl === false) {
 							$("action").innerHTML = "Your short link:";
@@ -330,51 +370,71 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				}, errorHandler);
 			}
 
+			function clearOldUrls() {
+				for (var s in uploadedToSecrets) {
+					if (uploadedToSecrets[s] && uploadedToSecrets[s] != secret) {
+						aGET('api/v1/clear/' + uploadedToSecrets[s]);
+					}
+				}
+				uploadedToSecrets = [secret];
+			}
+
 			function tab(n) {
 				if (n == currentTab) {
 					return;
 				}
+
 				if (n == 1) {
-					sendToDevice(false);
-				}
-				else {
-					sendToDevice(true);
-				}
-				//$("tab" + currentTab).style.display = "none";
-				//$("tab" + n).style.display = "inline";
-				$("tabBtn" + currentTab).className = "tab unselected";
-				$("tabBtn" + n).className = "tab";
-
-				currentTab = n;
-			}
-
-			function sendToDevice(activate) {
-				if (!activate) {
 					$("sendToDevice").style.display = "none";
 					customUrl = false;
+					var oldsecret = secret;
 					secret = secretsDB['shorturl']['secret'];
-					setUrl(secretsDB['shorturl']['url']);
-					$("url").innerHTML = '';
-					urlShown = false;
-					$("toshorten").onblur(true);
+					setUrl(secretsDB['shorturl']['url'], true);
+					//$("url").innerHTML = '';
+					//urlShown = false;
+					$("toshorten").onblur(true); // this sets the $("action") text
+
+					if ((uploadedFile || $("toshorten").value.length > 0) && oldsecret !== false && secret !== false) {
+						aGET('/api/v1/move/' + oldsecret + '/' + secret);
+						uploadedToSecrets.push(secret);
+					}
 				}
 				else {
 					$("sendToDevice").style.display = "inline-block";
 					$("action").innerHTML = "2. " + $("action").innerHTML;
 					$("url").innerHTML = "";
 					urlShown = false;
+					secret = false;
+
+					var clv = $("customLink").value;
+					if (secretsDB['customurls'][clv] && !secretsDB['customurls'][clv]['taken']) {
+						customUrl = clv;
+						secret = secretsDB['customurls'][clv]['secret'];
+						setUrl(clv);
+					}
+
+					clearOldUrls();
 				}
+
+				$("tabBtn" + currentTab).className = "tab unselected";
+				$("tabBtn" + n).className = "tab";
+				currentTab = n;
 			}
 
 			function allocateURI() {
 				aPOST('api/v1/allocate', '', function(data) {
-					data = JSON.parse(data);
-					setUrl(data[1]);
-					secret = data[0];
-					secretsDB['shorturl'] = {'secret': secret, 'url': data[1]};
-					if ($("error").innerHTML == msg_loadingLink) {
-						setData($("toshorten").value);
-						clearError();
+					try {
+						data = JSON.parse(data);
+						setUrl(data[1]);
+						secret = data[0];
+						secretsDB['shorturl'] = {'secret': secret, 'url': data[1]};
+						if ($("error").innerHTML == msg_loadingLink) {
+							uploadText();
+							clearError();
+						}
+					}
+					catch (e) {
+						errorHandler(data);
 					}
 				}, errorHandler);
 			}
