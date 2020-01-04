@@ -307,13 +307,11 @@
 		}
 
 		if (empty($data)) {
-			if (clearUrl($secret)) {
-				if ($noecho) {
-					exit;
-				}
-				die('1');
+			clearUrl($secret);
+			if ($noecho) {
+				exit;
 			}
-			error('Something odd happened', '500 Internal Server Error');
+			die('1');
 		}
 
 		if (substr($data, -1) == "\n" && substr_count($data, "\n") === 1) {  //substr($d,-1) instead of $d[-1] because PHP5.4...
