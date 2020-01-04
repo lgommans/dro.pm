@@ -156,7 +156,7 @@
 
 	// Returns [dataAvailable, dataType, data]
 	// Where dataAvailable = true when there is data, false when there is no data, or string "2" when there is an error
-	// Where dataType = 1 for redirect, 2 for html to display or 3 for a file download
+	// Where dataType = 1 for redirect, 2 for html to display, 3 for a file download
 	function tryGet($shortcode, $checkExists = false) {
 		global $db, $uploaddir;
 
