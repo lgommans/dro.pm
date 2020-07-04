@@ -1,2 +1,5 @@
 web/uploads/*
+web/api/dbconn.php
 android/dropm.luc/bin
+android/dropm.luc/gen/R.java.d
+*.swp
