@@ -54,7 +54,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			</form>
 			<div style="margin-top: 40px; color: #fff;" id=info>
 				<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a> |
-				<a style="font-size: 12pt; color: rgb(0, 215, 251);" target="_blank" rel=noopener href="https://github.com/lgommans/dro.pm/issues">Report a bug</a>
+				<a style="font-size: 12pt; color: rgb(0, 215, 251);" target="_blank" rel=noopener href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a>
 			</div>
 		</center>
 		<script>
@@ -267,20 +267,21 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					+ 'You can upload files, share some text, or share a link.<br>'
 					+ '<br>'
 					+ 'The links are case insensitive (<tt style="font-size: 12pt;">dro.pm/ab</tt> and <tt style="font-size: 12pt;">dro.pm/AB</tt> are the same) and do not include similar '
-					+ 'characters like i and 1 or o and zero.<br>'
+					+ 'characters like i and 1 or o and zero. They expire such that the convenient short links become available for the next person.<br>'
 					+ '<br>'
-					+ 'To report illegal stuff (e.g. phishing) or tell me something else, <a style="color: rgb(0, 215, 251);" href="https://twitter.com/lucgommans">send me a tweet</a>.<br>'
-					+ 'Note that links really do expire permanently after 12 hours, so you should capture any evidence yourself.<br>'
+					+ 'To report illegal stuff (e.g. phishing), a security issue, or tell me something else, use the contact info '
+					+ '<a style="color: rgb(0, 215, 251);" href="https://lucgommans.nl">on my personal website</a>. Note that links really do expire permanently after 18 hours, '
+					+ 'so you should capture evidence of illegal content.<br>'
 					+ '<br>'
-					+ 'You can also upload files from the command line:<br>'
-					+ '<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="https://pastebin.com/HUK0beKa">https://pastebin.com/HUK0beKa</a>';
+					+ 'You can also upload files from the command line, as simply as:<br><tt>user@localhost:~$ dropm example.mp3</tt><br>'
+					+ 'See <a style="font-size: 12pt; color: rgb(0, 215, 251);" href="http://pastebin.com/HUK0beKa">http://pastebin.com/HUK0beKa</a>';
 			}
 
 			function showUrl() {
 				if (!secret) return;
 
 				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
-					+ '<div class="urlSubtitle">(Works for 12 hours)</div>';
+					+ '<div class="urlSubtitle">(Works for 18 hours)</div>';
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
 				}

@@ -333,7 +333,7 @@
 
 		$db->query('UPDATE shorts '
 			. 'SET `value` = "' . $db->escape_string($data) . '", '
-				. '`expires` = ' . (time() + (3600 * 12)) . ', '
+				. '`expires` = ' . (time() + (3600 * 18)) . ', '
 				. '`type` = "' . $type . '", '
 				. '`expireAfterDownload` = ' . $expireAfterDownload . ' '
 			. 'WHERE secret = "' . $db->escape_string($secret) . '"')
