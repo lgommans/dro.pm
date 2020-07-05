@@ -320,7 +320,7 @@
 		}
 
 		$host = parse_url($data, PHP_URL_HOST);
-		if ($host === false || empty($host) || strlen($data) > 25000 || strpos($data, "\n") !== false || strpos($data, " http") !== false) {
+		if ($host === false || empty($host) || strlen($data) > 21000 || strpos($data, "\n") !== false || strpos($data, " http") !== false) {
 			// Doesn't look like a URL, so it's a paste!
 			$db->query('DELETE FROM pastes WHERE `secret` = "' . $secret . '"') or die('Database error 62871');
 			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")') or die('Database error 518543');
