@@ -122,14 +122,14 @@
 		}
 
 		if ($code === false) {
-			error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
+			error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable');
 		}
 
 		$result = false;
 		$i = 0;
 		while (!$result && $i++ < 10) {
 			if ($code === false || $generator->valid() === false) {
-				error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
+				error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable');
 			}
 			$result = @$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $code . "', -1, '', " . (time() + 180) . ", '" . $secret . "')");
 			if (!$result) { // duplicate key, most likely
