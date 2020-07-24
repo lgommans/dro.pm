@@ -122,14 +122,14 @@
 		}
 
 		if ($code === false) {
-			error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
+			error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable');
 		}
 
 		$result = false;
 		$i = 0;
 		while (!$result && $i++ < 10) {
 			if ($code === false || $generator->valid() === false) {
-				error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable', false);
+				error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable');
 			}
 			$result = @$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $code . "', -1, '', " . (time() + 180) . ", '" . $secret . "')");
 			if (!$result) { // duplicate key, most likely
@@ -320,7 +320,7 @@
 		}
 
 		$host = parse_url($data, PHP_URL_HOST);
-		if ($host === false || empty($host) || strlen($data) > 25000 || strpos($data, "\n") !== false || strpos($data, " http") !== false) {
+		if ($host === false || empty($host) || strlen($data) > 21000 || strpos($data, "\n") !== false || strpos($data, " http") !== false) {
 			// Doesn't look like a URL, so it's a paste!
 			$db->query('DELETE FROM pastes WHERE `secret` = "' . $secret . '"') or die('Database error 62871');
 			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")') or die('Database error 518543');
@@ -333,7 +333,7 @@
 
 		$db->query('UPDATE shorts '
 			. 'SET `value` = "' . $db->escape_string($data) . '", '
-				. '`expires` = ' . (time() + (3600 * 12)) . ', '
+				. '`expires` = ' . (time() + (3600 * 18)) . ', '
 				. '`type` = "' . $type . '", '
 				. '`expireAfterDownload` = ' . $expireAfterDownload . ' '
 			. 'WHERE secret = "' . $db->escape_string($secret) . '"')

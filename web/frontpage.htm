@@ -54,7 +54,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			</form>
 			<div style="margin-top: 40px; color: #fff;" id=info>
 				<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a> |
-				<a style="font-size: 12pt; color: rgb(0, 215, 251);" target="_blank" rel=noopener href="https://github.com/lgommans/dro.pm/issues">Report a bug</a>
+				<a style="font-size: 12pt; color: rgb(0, 215, 251);" target="_blank" rel=noopener href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a>
 			</div>
 		</center>
 		<script>
@@ -142,44 +142,92 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				setTimeout(function() {
 					// Delay a little bit of time to make sure the previous request went on the network already, and preceeds this one on the server (should we do sequence numbers maybe?).
 					aGET('api/v1/extend/' + secret + '/900', function(){}); // Reserve the link for 15 minutes so it can upload
-					$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload();
-					$("fileform").target = "fileframe";
-					$("fileform").submit();
-					uploadedFile = true;
-					$("fileframe").onload = function() {
-						// because clearing it before the upload completed would just be overwritten
-						uploadedToSecrets.push(secret);
-						clearOldUrls();
+
+					// Check if the browser has filename support. If not, use the original (1997) method of uploading files with a form and iframe...
+					if (!$("f").name || $("f").name.length <= 0) {
+						$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload();
+						$("fileform").target = "fileframe";
+						$("fileform").submit();
+						uploadedFile = true;
+						$("fileframe").onload = function() {
+							// because clearing it before the upload completed would just be overwritten
+							//   2020: wait, but we're not clearing the link that we just uploaded to, so I don't understand this code or comment (it seems to be a noop to me). TODO remove this and test
+							uploadedToSecrets.push(secret);
+							clearOldUrls();
+							clearTimeout(noprogressmsgtimeout);
+						}
+						$("action").innerHTML = imgLoading + "Uploading...<br>your link will be:";
+
+						// Show this only if the upload takes >2 seconds
+						noprogressmsgtimeout = setTimeout(function() {
+							errorHandler('(your browser has limited JavaScript support; upload progress unavailable)');
+						}, 3000);
+
+						t = 400;
+						function checkForUpdate() {
+							aGET('api/v1/check/' + url.replace((location.hostname.indexOf('beta.') != -1 ? 'beta.' : '') + 'dro.pm/', ''), function(data) {
+								if (data == '1') {
+									var text = "";
+									if (customUrl === false) {
+										text = "Your short link:";
+									}
+									else {
+										text = "Your custom link:";
+									}
+									$("action").innerHTML = "All done!<br>" + text;
+								}
+								else {
+									t = Math.min(2750, t + 25);
+									setTimeout(checkForUpdate, t);
+								}
+							});
+						}
+
+						setTimeout(function() {
+							checkForUpdate();
+						}, 750);
+					}
+					else {
+						$("action").innerHTML = "<div id=progressbg><div id=progressfg><div id=progresstext>" + formatSize(0, $("f").files[0].size) + "</div></div></div><br>Your link will be:";
+
+						var formData = new FormData();
+						formData.append('f', $("f").files[0]);
+
+						if (window.req) {
+							window.req.abort();
+							// this triggers readyState=4 which will not have the success response status from the server, so we need to clear the error...
+							$("error").innerHTML = '';
+						}
+						window.req = new XMLHttpRequest();
+						req.open("POST", "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload(), true);
+
+						req.onreadystatechange = function(e) {
+							if (req.readyState == 4) {
+								if (req.responseText == '1') {
+									var text = "Your custom link:";
+									if (customUrl === false) {
+										text = "Your short link:";
+									}
+									$("action").innerHTML = "All done!<br>" + text;
+									uploadedToSecrets.push(secret);
+									clearOldUrls();
+								}
+								else {
+									errorHandler('Upload failed: ' + req.responseText);
+								}
+							}
+						}
+
+						req.upload.addEventListener("progress", function(e) {
+							$("progresstext").innerHTML = formatSize(e.loaded, e.total);
+							$("progressfg").style.width = Math.floor(e.loaded / e.total * 100) + "%";
+						}, false);
+
+						req.send(formData);
 					}
 				}, 90);
 
-				$("action").innerHTML = imgLoading + "Uploading...<br>your link will be:";
 				showUrl();
-
-				t = 400;
-
-				function checkForUpdate() {
-					aGET('api/v1/check/' + url.replace((location.hostname.indexOf('beta.') != -1 ? 'beta.' : '') + 'dro.pm/', ''), function(data) {
-						if (data == '1') {
-							var text = "";
-							if (customUrl === false) {
-								text = "Your short link:";
-							}
-							else {
-								text = "Your custom link:";
-							}
-							$("action").innerHTML = "All done!<br>" + text;
-						}
-						else {
-							t = Math.min(2750, t + 25);
-							setTimeout(checkForUpdate, t);
-						}
-					});
-				}
-
-				setTimeout(function() {
-					checkForUpdate();
-				}, 750);
 			};
 
 			$("expireAfterFirstDownload").onchange = function() {
@@ -267,20 +315,21 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					+ 'You can upload files, share some text, or share a link.<br>'
 					+ '<br>'
 					+ 'The links are case insensitive (<tt style="font-size: 12pt;">dro.pm/ab</tt> and <tt style="font-size: 12pt;">dro.pm/AB</tt> are the same) and do not include similar '
-					+ 'characters like i and 1 or o and zero.<br>'
+					+ 'characters like i and 1 or o and zero. They expire such that the convenient short links become available for the next person.<br>'
 					+ '<br>'
-					+ 'To report illegal stuff (e.g. phishing) or tell me something else, <a style="color: rgb(0, 215, 251);" href="https://twitter.com/lucgommans">send me a tweet</a>.<br>'
-					+ 'Note that links really do expire permanently after 12 hours, so you should capture any evidence yourself.<br>'
+					+ 'To report illegal stuff (e.g. phishing), a security issue, or tell me something else, use the contact info '
+					+ '<a style="color: rgb(0, 215, 251);" href="https://lucgommans.nl">on my personal website</a>. Note that links really do expire permanently after 18 hours, '
+					+ 'so you should capture evidence of illegal content.<br>'
 					+ '<br>'
-					+ 'You can also upload files from the command line:<br>'
-					+ '<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="https://pastebin.com/HUK0beKa">https://pastebin.com/HUK0beKa</a>';
+					+ 'You can also upload files from the command line, as simply as:<br><tt>user@localhost:~$ dropm example.mp3</tt><br>'
+					+ 'See <a style="font-size: 12pt; color: rgb(0, 215, 251);" href="http://pastebin.com/HUK0beKa">http://pastebin.com/HUK0beKa</a>';
 			}
 
 			function showUrl() {
 				if (!secret) return;
 
 				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
-					+ '<div class="urlSubtitle">(Works for 12 hours)</div>';
+					+ '<div class="urlSubtitle">(Works for 18 hours)</div>';
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
 				}
@@ -444,6 +493,20 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				$("error").style.display = 'none';
 			}
 
+			function formatSize(sofar, total) {
+				var str;
+				if (total < 1e4) {
+					str = sofar + '/' + total + 'B';
+				}
+				else if (total < 1e7) {
+					str = Math.round(sofar / 1024) + '/' + Math.round(total / 1024) + 'KiB';
+				}
+				else {
+					str = Math.round(sofar / 1024 / 1024) + '/' + Math.round(total / 1024 / 1024) + 'MiB';
+				}
+				return str + '&nbsp;' + Math.floor(sofar / total * 100) + '%';
+			}
+
 			allocateURI();
 		</script>
 		<style>
@@ -513,6 +576,26 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 			#tabBtn2 {
 				float: right;
+			}
+
+			#progressbg {
+				background-color: #292932;
+				display: inline-block;
+				height: 30px;
+				width: 350px;
+				text-align: right;
+				vertical-align: center;
+			}
+			#progressfg {
+				background-color: #FFB030;
+				height: 100%;
+				width: 0%;
+				vertical-align: center;
+			}
+			#progresstext {
+				color: #ffc040;
+				font-size: 30px;
+				mix-blend-mode: difference;
 			}
 		</style>
 	</body>
