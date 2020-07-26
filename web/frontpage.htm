@@ -60,8 +60,8 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 		</div>
 		<center>
 			<div style="margin-top: 40px; color: #fff;" id=info>
-				<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a> |
-				<a style="font-size: 12pt; color: rgb(0, 215, 251);" target="_blank" rel=noopener href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a>
+				<a href="javascript:info()">More info</a> |
+				<a href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a>
 			</div>
 		</center>
 		<script>
@@ -69,9 +69,11 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 // TODO: update pastebin thingy
 			var msg_loadingLink = "Loading your link...";
 			var pasteimg_sizeratio = 0.6;
+			var defaultActionText = ["Press Ctrl + V<span style='font-size: 15pt;position:relative;top:-25px;'><br>to paste your link or text</span>",
+				"2. Share text, a link or a file"];
 
 			function $(id){ return document.getElementById(id); }
-			$("action").innerHTML = "Press Ctrl + V<span style='font-size: 15pt;position:relative;top:-25px;'><br>to paste your link or text</span>";
+			$("action").innerHTML = defaultActionText[0];
 
 			$("toshorten").focus();
 			$("toshorten").select();
@@ -107,13 +109,6 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			var hasPasted = false;
 			$("toshorten").value = "";
 
-			$("toshorten").onblur = function(force) {
-				if ($("toshorten").value.length == 0 || force === true) {
-					var t = (currentTab == 1 ? "" : "2. ");
-					$("action").innerHTML = t + "Share text, a link or a file<br>&nbsp;";
-				}
-			};
-
 			$("toshorten").onkeyup =
 			$("toshorten").onmouseup =
 			$("toshorten").onchange = function() {
@@ -142,11 +137,25 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				}
 				if (prevval != $("toshorten").value) {
 					uploadText();
+
+					// We were showing a pasted image, but we are overriding the link; let's remove that preview as well.
+					if (!$("previewCanvasWrapper").hidden) {
+						$("previewCanvasWrapper").hidden = true;
+					}
 				}
 				prevval = $("toshorten").value;
 			};
 
 			$("f").onchange = function() {
+				if (!secret && currentTab == 2) {
+					// They didn't select a link yet?
+					errorHandler("Choose a custom link first");
+					return;
+				}
+				else if ($("error").innerHTML.indexOf('Choose') === 0) {
+					clearError();
+				}
+
 				aGET('api/v1/clear/' + secret);
 
 				setTimeout(function() {
@@ -284,7 +293,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					judgement = red("Already taken.");
 				}
 				else {
-					if (r.length == 0) {
+					if (r.length === 0) {
 						// intentionally skipped
 					}
 					else if (r.length < 4) {
@@ -396,18 +405,18 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					+ 'characters like i and 1 or o and zero. They expire such that the convenient short links become available for the next person.<br>'
 					+ '<br>'
 					+ 'To report illegal stuff (e.g. phishing), a security issue, or tell me something else, use the contact info '
-					+ '<a style="color: rgb(0, 215, 251);" href="https://lucgommans.nl">on my personal website</a>. Note that links really do expire permanently after 18 hours, '
+					+ '<a href="https://lucgommans.nl">on my personal website</a>. Note that links really do expire permanently after 18 hours, '
 					+ 'so you should capture evidence of illegal content.<br>'
 					+ '<br>'
 					+ 'You can also upload files from the command line, as simply as:<br><tt>user@localhost:~$ dropm example.mp3</tt><br>'
-					+ 'See <a style="font-size: 12pt; color: rgb(0, 215, 251);" href="http://pastebin.com/HUK0beKa">http://pastebin.com/HUK0beKa</a>';
+					+ 'See <a href="http://pastebin.com/HUK0beKa">http://pastebin.com/HUK0beKa</a>';
 			}
 
 			function showUrl() {
 				if (!secret) return;
 
 				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
-					+ '<div class="urlSubtitle">(Works for 18 hours)</div>';
+					+ '<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();">delete</a>)</div>';
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
 				}
@@ -519,7 +528,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					setUrl(secretsDB['shorturl']['url'], true);
 					//$("url").innerHTML = '';
 					//urlShown = false;
-					$("toshorten").onblur(true); // this sets the $("action") text
+					$("action").innerHTML = "Share text, a link or a file<br>&nbsp;";
 
 					if ((uploadedFile || $("toshorten").value.length > 0) && oldsecret !== false && secret !== false) {
 						aGET('/api/v1/move/' + oldsecret + '/' + secret);
@@ -585,6 +594,19 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				return str + '&nbsp;' + Math.floor(sofar / total * 100) + '%';
 			}
 
+			function clearCurrentData() {
+				aGET('api/v1/clear/' + secret);
+				$("url").style.display = 'none';
+				urlShown = false;
+				$("action").innerHTML = defaultActionText[currentTab - 1];
+				$("previewCanvasWrapper").hidden = true;
+				if (window.req) {
+					window.req.abort();
+					// this triggers readyState=4 which will not have the success response status from the server, so we need to clear the error...
+					$("error").innerHTML = '';
+				}
+			}
+
 			allocateURI();
 		</script>
 		<style>
@@ -632,9 +654,10 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 			#tabs {
 				height: 80px;
-				width: 320px;
+				display: inline-block;
 			}
 			.tab {
+				display: inline-block;
 				padding-top: 8px;
 				padding-left: 25px;
 				padding-right: 25px;
@@ -648,12 +671,6 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			#tabs .unselected {
 				background-color: transparent;
 				cursor: pointer;
-			}
-			#tabBtn1 {
-				float: left;
-			}
-			#tabBtn2 {
-				float: right;
 			}
 
 			#progressbg {
@@ -677,6 +694,9 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 			#previewCanvasWrapper {
 				text-align: center;
+			}
+			a {
+				color: rgb(0, 215, 251);
 			}
 		</style>
 	</body>
