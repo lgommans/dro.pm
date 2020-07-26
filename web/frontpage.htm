@@ -66,7 +66,6 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 		</center>
 		<script>
 // TODO: reAllocate shortcode if t>60s
-// TODO: update pastebin thingy
 			var msg_loadingLink = "Loading your link...";
 			var pasteimg_sizeratio = 0.6;
 			var defaultActionText = ["Press Ctrl + V<span style='font-size: 15pt;position:relative;top:-25px;'><br>to paste your link or text</span>",
@@ -441,8 +440,6 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				}
 			}
 
-			setInterval($("toshorten").onchange, 250);
-
 			function aPOST(uri, data, callback, errorCallback) {
 				var req = new XMLHttpRequest();
 				req.open("POST", uri, true);
@@ -607,6 +604,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				}
 			}
 
+			setInterval($("toshorten").onchange, 250);
 			allocateURI();
 		</script>
 		<style>
