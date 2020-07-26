@@ -52,11 +52,13 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					<iframe id="fileframe" name="fileframe"></iframe>
 				</div>
 			</form>
-			<div id="previewCanvasWrapper" hidden="true">
-				<br/>
-				Preview:<br/>
-				<canvas style="border:1px solid grey;" id="previewCanvas"></canvas>
-			</div>
+		</center>
+		<div id="previewCanvasWrapper" hidden="true">
+			<br>
+			Image preview:<br>
+			<canvas style="border:1px solid grey;" id="previewCanvas"></canvas>
+		</div>
+		<center>
 			<div style="margin-top: 40px; color: #fff;" id=info>
 				<a style="font-size: 12pt; color: rgb(0, 215, 251);" href="javascript:info()">More info</a> |
 				<a style="font-size: 12pt; color: rgb(0, 215, 251);" target="_blank" rel=noopener href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a>
@@ -65,71 +67,11 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 		<script>
 // TODO: reAllocate shortcode if t>60s
 // TODO: update pastebin thingy
-			msg_loadingLink = "Loading your link...";
+			var msg_loadingLink = "Loading your link...";
+			var pasteimg_sizeratio = 0.6;
 
 			function $(id){ return document.getElementById(id); }
 			$("action").innerHTML = "Press Ctrl + V<span style='font-size: 15pt;position:relative;top:-25px;'><br>to paste your link or text</span>";
-			window.addEventListener("paste", function(pasteEvent) {
-				if (pasteEvent.clipboardData == false) {
-					if (typeof(callback) == "function") {
-						return;
-					}
-				};
-
-				var items = pasteEvent.clipboardData.items;
-
-				if (items == undefined) {
-					if (typeof(callback) == "function") {
-						return;
-					}
-				};
-
-				// See https://stackoverflow.com/a/47172409 for more information on this
-				var dt = new DataTransfer(); // Create fresh object with no data
-
-				for (var i = 0; i < items.length; i++) {
-					// Skip content if not image
-					if (items[i].type.indexOf("image") == -1) continue;
-					// Retrieve image on clipboard as blob / File object
-					var blob = items[i].getAsFile();
-					dt.items.add(blob); // Add the File object to the items list. Implicitly also adds it to the Files array?
-				}
-
-				// If there's an image, display it in the canvas
-				if (blob) {
-					var canvas = document.getElementById("previewCanvas");
-					var ctx = canvas.getContext('2d');
-					
-					// Create an image to render the blob on the canvas
-					var img = new Image();
-
-					// Once the image loads, render the img on the canvas
-					img.onload = function(){
-						// Update dimensions of the canvas with the dimensions of the image
-						canvas.width = this.width * 0.5;
-						canvas.height = this.height * 0.5;
-
-						// Draw the image
-						ctx.drawImage(img, 0, 0, img.width * 0.5, img.height * 0.5);
-						ctx.scale(0.5, 0.5);
-					};
-
-					// Crossbrowser support for URL
-					var URLObj = window.URL || window.webkitURL;
-
-					// Creates a DOMString containing a URL representing the object given in the parameter
-					// namely the original Blob
-					img.src = URLObj.createObjectURL(blob);
-					$('previewCanvasWrapper').hidden = false;
-				}
-
-				$('f').files = dt.files; // Set the form's files array equal to the fresh one. This would clear any uploaded file!
-				// Only trigger reload if there are actually files to submit.
-				// This check is needed because this code is also fired when the user only pastes text.
-				if (dt.files.length > 0) {
-					$('f').onchange(); // Manually trigger the onchange function because it doesn't on it's own.
-				}
-			}, false);
 
 			$("toshorten").focus();
 			$("toshorten").select();
@@ -140,6 +82,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			var secret = false;
 			var uploadedToSecrets = [];
 			var uploadedFile = false; // whether we uploaded a file or text/url
+			var toshortenprevval = null;
 
 			var imgLoading = "<img src='res/img/loading-dark.gif' height='25'/> ";
 
@@ -260,6 +203,10 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 						var formData = new FormData();
 						formData.append('f', $("f").files[0]);
 
+						if ($("f").files[0].type.indexOf("image/") === 0) {
+							showImage($("f").files[0]);
+						}
+
 						if (window.req) {
 							window.req.abort();
 							// this triggers readyState=4 which will not have the success response status from the server, so we need to clear the error...
@@ -375,6 +322,70 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				}
 				$("customLinkValidation").innerHTML = judgement;
 			};
+
+			window.addEventListener("paste", function(pasteEvent) {
+				if (!pasteEvent.clipboardData) {
+					return;
+				}
+
+				var items = pasteEvent.clipboardData.items;
+
+				if (pasteEvent.clipboardData.items[0].kind == 'string') {
+					if (document.activeElement != $("toshorten")) {
+						toshortenprevval = $("toshorten").value;
+						var fml = pasteEvent.clipboardData.getData("text");
+						setTimeout(function() { // fix for MSIEdge, it pastes it twice behind each other otherwise
+							$("toshorten").value = fml;
+						}, 1);
+						$("toshorten").focus(); // Such that ctrl+z works if they next press it
+					}
+					return;
+				}
+
+				if (pasteEvent.clipboardData.files.length === 0) {
+					return errorHandler("No text or image detected on the clipboard. This appears to happen for large images. Try the file upload feature, that goes up to gigabytes!");
+				}
+
+				if (items.length > 1) {
+					errorHandler("Only one clipboard item supported at the moment; using first one.");
+				}
+
+				if (pasteEvent.clipboardData.files[0].type.indexOf("image/") === 0) {
+					showImage(items[0].getAsFile());
+				}
+
+				// credits to https://stackoverflow.com/a/47172409 for the method of converting the paste event to a <input type=file> using DataTransfer
+				var dt = new DataTransfer();
+				dt.items.add(items[0].getAsFile());
+				$('f').files = dt.files;
+				$('f').onchange(); // the onchange doesn't trigger on its own despite, y'know, it having changed
+			}, false);
+
+			$("toshorten").onkeydown = function(ev) {
+				if (ev.key == 'z' && ev.ctrlKey && toshortenprevval) {
+					$("toshorten").value = toshortenprevval;
+					toshortenprevval = null;
+				}
+				else if (toshortenprevval && ev.key.length == 1) { // if it's a letter/digit/symbol we're typing, we don't want "undo" (ctrl+z) to trigger our custom undo thingy
+					toshortenprevval = null;
+				}
+			};
+
+			function showImage(imgfile) {
+				var canvas = $("previewCanvas");
+				var ctx = canvas.getContext('2d');
+
+				var img = new Image();
+				img.onload = function() {
+					canvas.width = this.width * pasteimg_sizeratio;
+					canvas.height = this.height * pasteimg_sizeratio;
+					ctx.drawImage(img, 0, 0, img.width * pasteimg_sizeratio, img.height * pasteimg_sizeratio);
+					ctx.scale(pasteimg_sizeratio, pasteimg_sizeratio);
+				};
+
+				img.src = (window.URL || window.webkitURL).createObjectURL(imgfile);
+				$('previewCanvasWrapper').hidden = false;
+			}
 
 			function info() {
 				$("info").innerHTML = '<div style="color: #FFB030; font-size: 2em;">Info</div>'
@@ -663,6 +674,9 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				color: #ffc040;
 				font-size: 30px;
 				mix-blend-mode: difference;
+			}
+			#previewCanvasWrapper {
+				text-align: center;
 			}
 		</style>
 	</body>
