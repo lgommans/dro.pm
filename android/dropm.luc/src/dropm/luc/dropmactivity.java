@@ -58,38 +58,37 @@ public class dropmactivity extends Activity {
 					return;
 				}
 				String fname = file.getName();
-				int filesize = (int) file.length();
-				int maxFileSize = 1024 * 1024 * 128; // Currently you can't upload big files, and it makes for a hard limit on a while(true) loop below.
+				long filesize = (long) file.length();
+				long maxFileSize = 1024 * 1024 * 1024 * 5;
 				if (filesize > maxFileSize) {
-					out.setText("File too big (about 50MB max currently). You can complain about this using the 'Report a bug' feature on the website.");
+					out.setText("File too big (5GB max currently). You can complain about this using the 'Report a bug' feature on the website.");
 					return;
 				}
 
-				// From Emmanuel, http://stackoverflow.com/a/4126746
+				// From Emmanuel, https://stackoverflow.com/a/4126746
 				// cc by-sa 3.0 with attribution required
 				try {
-					out.setText("Connecting to dro.pm...");
-					Socket post = new Socket("dro.pm", 80);
-					OutputStream outstream = post.getOutputStream();
+					out.setText("Connecting to https://dro.pm...");
 
-					// Build some body parts already, to be used in the content-length calculation
-					String bound = "ubiYu9a4DvrqDBsbDNGxoxG1hZZ45F4HnPX1jTnU";
+					java.net.URL url = new java.net.URL("https://dro.pm/fileman.php");
+					java.net.HttpURLConnection huc = (java.net.HttpURLConnection) url.openConnection();
+					huc.setDoOutput(true);
+					huc.setRequestMethod("POST");
+
+					String bound = "ubiYu9a4DvrqDBsbDNGxoxG1hZZ45F4HnPX1jTnU"; // TODO randomize
 					String bodyStart = "--" + bound + "\r\n"
 						+ "Content-Disposition: form-data; name=\"f\"; filename=\"" + fname + "\"\r\n"
 						+ "Content-Type: application/octet-stream\r\n"
 						+ "\r\n";
 					String bodyEnd = "\r\n--" + bound;
 
-					// Write the headers and the start of the body
-					outstream.write(("POST /fileman.php HTTP/1.1\r\n"
-							+ "Host: dro.pm\r\n"
-							+ "User-Agent: dro.pm-androidapp\r\n"
-							+ "Connection: close\r\n"
-							+ "Content-Type: multipart/form-data; boundary=" + bound + "\r\n"
-							+ "Content-Length: " + (bodyStart.length() + filesize + bodyEnd.length()) + "\r\n"
-							+ "\r\n"
-							+ bodyStart
-						).getBytes());
+					huc.setRequestProperty("Content-type", "multipart/form-data; boundary=" + bound);
+					huc.setRequestProperty("Content-Length", "" + (bodyStart.length() + filesize + bodyEnd.length()));
+					huc.setRequestProperty("User-Agent", "dro.pm-androidapp/1.1");
+
+					java.io.DataOutputStream outstream = new java.io.DataOutputStream(huc.getOutputStream());
+
+					outstream.writeBytes(bodyStart);
 
 					// Copy the file in `buffersize` increments to the network
 					out.setText("Uploading file...");
@@ -111,49 +110,40 @@ public class dropmactivity extends Activity {
 					}
 
 					// Finish up and let's see if we receive anything.
-					outstream.write(bodyEnd.getBytes());
+					outstream.writeBytes(bodyEnd);
 					out.setText("Waiting for upload to finish...");
 
-					InputStream in = post.getInputStream();
-					String received = "";
+					InputStream responseStream = new java.io.BufferedInputStream(huc.getInputStream());
+					java.io.BufferedReader responseStreamReader = new java.io.BufferedReader(new java.io.InputStreamReader(responseStream));
 					int timeout = 60; // We don't know if everything left the network transmit buffer already, so better set a high limit.
 					int starttime = currentUnixTime();
-					while (true) {
-						if (in.available() > 0) {
-							int readBytes = in.available();
-							in.read(b, 0, readBytes);
-							received += new String(b).substring(0, readBytes);
+					String line = "";
+					StringBuilder stringBuilder = new StringBuilder();
+					String received;
+					while ((line = responseStreamReader.readLine()) != null) {
+						stringBuilder.append(line).append("\n");
+					}
+					responseStreamReader.close();
+
+					received = stringBuilder.toString();
+					String needle = "dro.pm/";
+					int needlepos = received.indexOf(needle);
+					if (needlepos != -1) {
+						String shortLink = received.substring(needlepos);
+						String text = "Download the file at:\n\n" + shortLink;
+						if (clip("https://" + shortLink)) {
+							text += "\n\nThe link has been copied to your clipboard.";
 						}
-						if (received.contains("\r\n")) {
-							// We have received at least the status line
-							String status = received.substring(received.indexOf(" ") + 1);
-							status = status.substring(0, status.indexOf(" "));
-							if (!status.equals("200")) {
-								out.setText("Error in server communication (status " + status + "). This is the raw response:\n" + received);
-								return;
-							}
+						else {
+							text += "\n\nThe link could not be copied to your clipboard because this app does not support Android before version 3.0. "
+								+ "You can complain about this on dro.pm using the 'Report a bug' feature.";
 						}
-						String needle = "dro.pm/";
-						int needlepos = received.indexOf(needle);
-						if (needlepos != -1) {
-							// There might be an edge case in which "dro.pm/" is already downloaded, but not the (complete) URI. We are ignoring this for now because
-							// I do not feel like parsing the headers to find the Content-Length header, etc.
-							String shortLink = received.substring(needlepos);
-							String text = "Download the file at:\n\n" + shortLink;
-							if (clip("http://" + shortLink)) {
-								text += "\n\nThe link has been copied to your clipboard.";
-							}
-							else {
-								text += "\n\nThe link could not be copied to your clipboard because this app does not support Android before version 3.0. "
-									+ "You can complain about this on dro.pm using the 'Report a bug' feature.";
-							}
-							out.setText(text);
-							return;
-						}
-						if (currentUnixTime() - starttime > timeout) {
-							out.setText("Time-out while waiting for a response. Received (if anything): '" + received + "'");
-							return;
-						}
+						out.setText(text);
+						return;
+					}
+					if (currentUnixTime() - starttime > timeout) {
+						out.setText("Timeout while waiting for a response. Received (if anything): \"" + received + "\"");
+						return;
 					}
 				}
 				catch (Exception e) {
@@ -173,7 +163,7 @@ public class dropmactivity extends Activity {
 	}
 
 	public static String getRealPathFromUri(Context context, Uri contentUri) {
-		// From Selecsosi, http://stackoverflow.com/a/20059657
+		// From Selecsosi, https://stackoverflow.com/a/20059657
 		// cc by-sa 3.0 with attribution required
 		Cursor cursor = null;
 		try {
