@@ -84,7 +84,7 @@ public class dropmactivity extends Activity {
 
 					huc.setRequestProperty("Content-type", "multipart/form-data; boundary=" + bound);
 					huc.setRequestProperty("Content-Length", "" + (bodyStart.length() + filesize + bodyEnd.length()));
-					huc.setRequestProperty("User-Agent", "dro.pm-androidapp/1.1");
+					huc.setRequestProperty("User-Agent", "dro.pm-androidapp/0.2");
 
 					java.io.DataOutputStream outstream = new java.io.DataOutputStream(huc.getOutputStream());
 
