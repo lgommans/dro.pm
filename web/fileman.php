@@ -15,7 +15,7 @@
 	}
 
 	if (empty($_GET['secret'])) {
-		if ($_SERVER['HTTP_USER_AGENT'] == 'cli' || $_SERVER['HTTP_USER_AGENT'] == 'dro.pm-androidapp') {
+		if (strpos($_SERVER['HTTP_USER_AGENT'], 'cli') === 0 || strpos($_SERVER['HTTP_USER_AGENT'], 'dro.pm-androidapp') === 0) {
 			list($secret, $key) = allocate();
 			$retval = htmlspecialchars($secret) . ' dro.pm/' . htmlspecialchars($key);
 		}
