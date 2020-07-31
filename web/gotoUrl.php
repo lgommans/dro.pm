@@ -6,13 +6,14 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 header('Pragma: no-cache');
 header('Expires: 0');
 
+if ($_SERVER['HTTP_USER_AGENT'] === 'TelegramBot (like TwitterBot)') {
+	header('HTTP/1.1 204 No Content For You My Caching Friend');
+	exit;
+}
+
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
-    if ($_SERVER['HTTP_USER_AGENT'] === 'TelegramBot (like TwitterBot)') {
-        header('HTTP/1.1 204 No Content For You My Caching Friend');
-        exit;
-    }
-    else if ($type == 1) {
+    if ($type == 1) {
 		header('HTTP/1.1 307 Temporary Redirect');
 		header('Location: ' . $data);
 
@@ -30,7 +31,7 @@ if ($status !== false) {
 
 		exit;
 	}
-	else {
+	else if ($type == 3) {
 		$fpath = $data[0];
 		$original_fname = $data[1];
 		$ext = strtolower(pathinfo($original_fname, PATHINFO_EXTENSION));
@@ -65,22 +66,28 @@ if ($status !== false) {
 
 		exit;
 	}
+	else {
+		die('Error 194394');
+	}
 }
 
 ?>
 <br>
-<h3><img src='res/img/loading.gif'/> Loading...</h3>
-<br/>
-You found an empty link. It exists, but there is no content (yet). Usually, the sender is still uploading the file. We are waiting for the content to become available.<br>
+<br>
+<br><!-- who ever reads the first line of corner text? -->
+<br>
+<strong>This link exists but is empty.</strong> Perhaps the sender is still uploading the file.<br>
+<br>
+This page automatically loads when it becomes available.<br>
 <br>
 <span id='lastcheck'></span>
-<noscript><font color=red>JavaScript is disabled. Could not check for update.</font></noscript>
+<noscript><font color=red>JavaScript is disabled. Cannot check for update.</font></noscript>
 
 <script>
 	t = 350;
 	
 	function checkForUpdate() {
-		document.getElementById('lastcheck').innerText += ' (Checking for update now...)';
+		document.getElementById('lastcheck').innerHTML += " <img src='res/img/loading.gif'>";
 		aGET('api/v1/check/<?php echo htmlspecialchars($_GET['shortcode']); ?>', function(data) {
 			if (data == '1') {
 				location.reload();
@@ -251,7 +258,15 @@ if (!e) e = window.event;
  }
 if (!vis) kill();
 }
+function mouse2(e) {
+	var fake_event = {
+		pageX: e.changedTouches[0].pageX,
+		pageY: e.changedTouches[0].pageY,
+	};
+	mouse(fake_event);
+}
 document.onmousemove=mouse;
+document.ontouchmove=mouse2;
 
 function winDims(){
 winH=(ieType)?ieRef.clientHeight:window.innerHeight; 
