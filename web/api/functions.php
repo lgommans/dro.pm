@@ -88,7 +88,7 @@
 		if ($result->num_rows > 0) {
 			while ($row = $result->fetch_row()) {
 				$data = json_decode($row[0], true);
-				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
+				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), '/api') === false) {
 					$dir = $uploaddir . '/';
 				}
 				else {
@@ -216,7 +216,7 @@
 		if ($result->num_rows > 0) {
 			$row = $result->fetch_row();
 			$data = json_decode($row[0], true);
-			if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
+			if (strpos(substr(getcwd(), strlen(getcwd()) - 4), '/api') === false) {
 				$dir = $uploaddir . '/';
 			}
 			else {
@@ -314,9 +314,8 @@
 			die('1');
 		}
 
-		if (substr($data, -1) == "\n" && substr_count($data, "\n") === 1) {  //substr($d,-1) instead of $d[-1] because PHP5.4...
-			// Someone hit enter, as if that is needed, even though the link was already shown. Tsk. Let's strip off that enter...
-			$data = substr($data, 0, -1);
+		if (strlen(substr($data, strpos($data, "\n"))) == substr_count($data, "\n")) { // all newlines are at the end
+			$data = trim($data);
 		}
 
 		$host = parse_url($data, PHP_URL_HOST);
