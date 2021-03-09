@@ -61,10 +61,10 @@ good idea. The main feature of this site is expiring old garbage and there are p
 you can generate life-long and custom URLs on a FCFS basis. The time limits would probably be
 something like between 2 seconds and 2 weeks.
 
-Another idea includes a manager where you have one link behind which there is an overview of links,
+Another idea includes a manager where you have one link behind which is an overview of links,
 texts (pastes), and files, and people opening the link can pick from the menu what they want to open.
 An example case for this would be a classroom setting, where the teacher generates a link the first
-time s/he needs it and adds more resources to it later. Here, it would also be useful to give a
+time s/he needs it and adds more resources to it throughout the lesson. Here, it would also be useful to give a
 store/load option, where the collective page can be downloaded. And, after downloading, maybe also
 load it back into a new link later, for example for the next session.
 

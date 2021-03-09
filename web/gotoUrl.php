@@ -7,7 +7,7 @@ header('Pragma: no-cache');
 header('Expires: 0');
 
 if ($_SERVER['HTTP_USER_AGENT'] === 'TelegramBot (like TwitterBot)') {
-	header('HTTP/1.1 204 No Content For You My Caching Friend');
+	header('HTTP/1.1 204 No Content For You My Cache Header Ignoring Friend');
 	exit;
 }
 
@@ -87,7 +87,7 @@ This page automatically loads when it becomes available.<br>
 	t = 350;
 	
 	function checkForUpdate() {
-		document.getElementById('lastcheck').innerHTML += " <img src='res/img/loading.gif'>";
+		document.getElementById('lastcheck').innerHTML += " <img src='res/img/loading.gif'> <i>now checking...</i>";
 		aGET('api/v1/check/<?php echo htmlspecialchars($_GET['shortcode']); ?>', function(data) {
 			if (data == '1') {
 				location.reload();
@@ -131,13 +131,10 @@ text-align:center;
 }
 </style>
 
-<script language="JavaScript">
 <!-- Mouse Follow Clock from Rainbow Arch -->
 <!-- This script and many more from : -->
 <!-- http://rainbow.arch.scriptmania.com -->
-
-<!-- Mouse Follow Clock from www.rainbow.arch.scriptmania.com
-//Hide from older browsers  (I think we can say 'ancient' by now, it's 2019.)
+<script language="JavaScript">
 if (document.getElementById&&!document.layers){
 
 // *** Clock colours
@@ -155,8 +152,7 @@ ref=40;   //Run speed (timeout).
 var ieType=(typeof window.innerWidth != 'number');
 var docComp=(document.compatMode);
 var docMod=(docComp && docComp.indexOf("CSS") != -1);
-var ieRef=(ieType && docMod)
-?document.documentElement:document.body;
+var ieRef=(ieType && docMod)?document.documentElement:document.body;
 theDays=new Array("SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY");
 theMonths=new Array("JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER");
 date=new Date();
@@ -183,8 +179,8 @@ ofx=-3;
 ofst=70;
 tmr=null;
 vis=true;
-mouseY=0;
-mouseX=0;
+mouseY=-10000;
+mouseX=-10000;
 dy=new Array();
 dx=new Array();
 zy=new Array();

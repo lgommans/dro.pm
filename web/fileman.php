@@ -40,7 +40,7 @@
 
 	$data = ['original_filename' => $_FILES['f']['name'], 'filename' => $key];
 	$data = $db->escape_string(json_encode($data));
-	$db->query('UPDATE `shorts` SET `expires` = ' . (time() + (12*3600)) . ', `type` = 2, `value` = "' . $data . '", expireAfterDownload = ' . $expireAfterDownload
+	$db->query('UPDATE `shorts` SET `expires` = ' . (time() + (12 * 3600)) . ', `type` = 2, `value` = "' . $data . '", expireAfterDownload = ' . $expireAfterDownload
 		. ' WHERE `secret` = "' . $db->escape_string($secret) . '"') or die('Database error 29348');
 
 	die($retval);

@@ -1,7 +1,10 @@
 <?php 
-	function error($message = 'A request was sent that could not be understood', $status = '400 Bad Request') {
+	function error($message = 'A request was sent that could not be understood', $status = '400 Bad Request', $includeDefaultMessage = true) {
 		header('HTTP/1.1 ' . $status);
-		echo '<h3>' . $status . '</h3>' . $message;
+		if ($includeDefaultMessage) {
+			$defaultMessage = '. API documentation is currently unavailable. You can however always contact the author twitter.com/lucgommans';
+		}
+		echo '<h3>' . $status . '</h3>' . $message . $defaultMessage;
 		exit;
 	}
 

@@ -122,14 +122,14 @@
 		}
 
 		if ($code === false) {
-			error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable');
+			error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at https://github.com/lgommans/dro.pm/issues', '503 Service Temporarily Unavailable', false);
 		}
 
 		$result = false;
 		$i = 0;
 		while (!$result && $i++ < 10) {
 			if ($code === false || $generator->valid() === false) {
-				error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at twitter.com/lucgommans', '503 Service Temporarily Unavailable');
+				error('No more short links available. This should not happen but we haven\'t implemented any limiting on usage yet, so if you read this that means we have work to do. Let me know at https://github.com/lgommans/dro.pm/issues', '503 Service Temporarily Unavailable', false);
 			}
 			$result = @$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $code . "', -1, '', " . (time() + 180) . ", '" . $secret . "')");
 			if (!$result) { // duplicate key, most likely
@@ -184,13 +184,7 @@
 				else {
 					$data = $data->fetch_row();
 				}
-				// TODO remove this old code =)
-				//$html = '<meta charset="utf-8"/><body style="margin:0"><textarea style="border:0; padding:9px; width:100%; height:99%">' . htmlspecialchars($data[0]) . '</textarea></body>';
-				//if ($_GET['ext'] == 'raw' || $_GET['ext'] == 'txt') {
-					header('Content-Type: text/plain; charset=utf-8');
-					//$html = $data[0];
-				//}
-				//return array(true, 2, $html, $result[2]);
+				header('Content-Type: text/plain; charset=utf-8');
 				return array(true, 2, $data[0], $result[2]);
 
 			case 2:
@@ -210,6 +204,14 @@
 	}
 
 	function clearUrl($secret) {
+		global $db;
+
+		clearFile($secret);
+
+		$db->query('UPDATE `shorts` SET `type` = -1, `value` = "", `expires` = ' . (time() + 600) . ' WHERE `secret` = "' . $db->escape_string($secret) . '"') or die("Database error 83293");
+	}
+
+	function clearFile($secret) {
 		global $db, $uploaddir;
 
 		$result = $db->query("SELECT `value` FROM `shorts` WHERE `type` = 2 AND `secret` = '" . $db->escape_string($secret) . "'");
@@ -224,7 +226,6 @@
 			}
 			unlink($dir . $data['filename']);
 		}
-		$db->query('UPDATE `shorts` SET `type` = -1, `value` = "", `expires` = ' . (time() + 600) . ' WHERE `secret` = "' . $db->escape_string($secret) . '"') or die("Database error 83293");
 	}
 
 	function getSecretByCode($code) {
@@ -289,10 +290,10 @@
 	function api_set($secret = false, $data = false, $expireAfterDownload = false, $noecho = false) {
 		global $db;
 		if ($secret === false) {
-			if (!isset($_GET['secret'])) {
-				error("No secret included in request.");
-			}
 			$secret = $_GET['secret'];
+			if (!isset($secret) || strlen($secret) != 40) {
+				error('No secret included in request or token not 40 characters.');
+			}
 		}
 
 		if ($expireAfterDownload === false) {
@@ -309,25 +310,24 @@
 		if (empty($data)) {
 			clearUrl($secret);
 			if ($noecho) {
-				exit;
+				return;
 			}
 			die('1');
 		}
 
-		if (strlen(substr($data, strpos($data, "\n"))) == substr_count($data, "\n")) { // all newlines are at the end
-			$data = trim($data);
-		}
+		clearFile($secret);
 
-		$host = parse_url($data, PHP_URL_HOST);
-		if ($host === false || empty($host) || strlen($data) > 21000 || strpos($data, "\n") !== false || strpos($data, " http") !== false) {
+		$host = parse_url(trim($data), PHP_URL_HOST);
+		if ($host === false || empty($host) || strlen($data) > 21000 || strpos(trim($data), "\n") !== false) {
 			// Doesn't look like a URL, so it's a paste!
 			$db->query('DELETE FROM pastes WHERE `secret` = "' . $secret . '"') or die('Database error 62871');
 			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")') or die('Database error 518543');
-			$data = substr($secret, 0, 40);
-			$type = "1";
+			$data = $secret;
+			$type = '1';
 		}
 		else {
-			$type = "0";
+			$data = trim($data);
+			$type = '0';
 		}
 
 		$db->query('UPDATE shorts '
@@ -339,7 +339,7 @@
 			or die("Database error 28943");
 
 		if ($noecho) {
-			exit;
+			return;
 		}
 		die('1');
 	}
