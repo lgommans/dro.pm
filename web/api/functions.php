@@ -320,8 +320,8 @@
 		$host = parse_url(trim($data), PHP_URL_HOST);
 		if ($host === false || empty($host) || strlen($data) > 21000 || strpos(trim($data), "\n") !== false) {
 			// Doesn't look like a URL, so it's a paste!
-			$db->query('DELETE FROM pastes WHERE `secret` = "' . $secret . '"') or die('Database error 62871');
-			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")') or die('Database error 518543');
+			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")
+				ON DUPLICATE KEY UPDATE data = "' . $db->escape_string($data) . '"') or die('Database error 62872');
 			$data = $secret;
 			$type = '1';
 		}
@@ -337,6 +337,14 @@
 				. '`expireAfterDownload` = ' . $expireAfterDownload . ' '
 			. 'WHERE secret = "' . $db->escape_string($secret) . '"')
 			or die("Database error 28943");
+
+		if ($db->affected_rows !== 1) {
+			// Either the secret doesn't exist, or the data was already up-to-date. Let's check that to not return an inappropriate error...
+			$result = $db->query('SELECT expires FROM shorts WHERE secret = "' . $db->escape_string($secret) . '"') or die('Database error 77314');
+			if ($result->num_rows !== 1) {
+				die('secret not found');
+			}
+		}
 
 		if ($noecho) {
 			return;

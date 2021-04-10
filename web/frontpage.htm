@@ -500,6 +500,12 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 							$("action").innerHTML = "Your custom link:";
 						}
 					}
+					else if (data == 'secret not found') {
+						errorHandler('This link seems to have expired. Please create a new one by <a href="javascript:location.reload()">reloading the page</a>.');
+					}
+					else {
+						errorHandler(data);
+					}
 				}, errorHandler);
 			}
 
