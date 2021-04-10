@@ -84,6 +84,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			var uploadedToSecrets = [];
 			var uploadedFile = false; // whether we uploaded a file or text/url
 			var toshortenprevval = null;
+			var queuedUpload = function(){};
 
 			var imgLoading = "<img src='res/img/loading-dark.gif' height='25'/> ";
 
@@ -146,110 +147,22 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			};
 
 			$("f").onchange = function() {
-				if (!secret && currentTab == 2) {
-					// They didn't select a link yet?
-					errorHandler("Choose a custom link first");
-					return;
+				if (!secret) {
+					if (currentTab == 2) {
+						// They didn't select a link yet?
+						errorHandler("Choose a custom link first");
+						return;
+					}
+					else {
+					}
 				}
 				else if ($("error").innerHTML.indexOf('Choose') === 0) {
 					clearError();
 				}
 
-				aGET('api/v1/clear/' + secret);
-
-				setTimeout(function() {
-					// Delay a little bit of time to make sure the previous request went on the network already, and preceeds this one on the server (should we do sequence numbers maybe?).
-					aGET('api/v1/extend/' + secret + '/900', function(){}); // Reserve the link for 15 minutes so it can upload
-
-					// Check if the browser has filename support. If not, use the original (1997) method of uploading files with a form and iframe...
-					if (!$("f").name || $("f").name.length <= 0) {
-						$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload();
-						$("fileform").target = "fileframe";
-						$("fileform").submit();
-						uploadedFile = true;
-						$("fileframe").onload = function() {
-							// because clearing it before the upload completed would just be overwritten
-							//   2020: wait, but we're not clearing the link that we just uploaded to, so I don't understand this code or comment (it seems to be a noop to me). TODO remove this and test
-							uploadedToSecrets.push(secret);
-							clearOldUrls();
-							clearTimeout(noprogressmsgtimeout);
-						}
-						$("action").innerHTML = imgLoading + "Uploading...<br>your link will be:";
-
-						// Show this only if the upload takes >2 seconds
-						noprogressmsgtimeout = setTimeout(function() {
-							errorHandler('(your browser has limited JavaScript support; upload progress unavailable)');
-						}, 3000);
-
-						t = 400;
-						function checkForUpdate() {
-							aGET('api/v1/check/' + url.replace((location.hostname.indexOf('beta.') != -1 ? 'beta.' : '') + 'dro.pm/', ''), function(data) {
-								if (data == '1') {
-									var text = "";
-									if (customUrl === false) {
-										text = "Your short link:";
-									}
-									else {
-										text = "Your custom link:";
-									}
-									$("action").innerHTML = "All done!<br>" + text;
-								}
-								else {
-									t = Math.min(2750, t + 25);
-									setTimeout(checkForUpdate, t);
-								}
-							});
-						}
-
-						setTimeout(function() {
-							checkForUpdate();
-						}, 750);
-					}
-					else {
-						$("action").innerHTML = "<div id=progressbg><div id=progressfg><div id=progresstext>" + formatSize(0, $("f").files[0].size) + "</div></div></div><br>Your link will be:";
-
-						var formData = new FormData();
-						formData.append('f', $("f").files[0]);
-
-						if ($("f").files[0].type.indexOf("image/") === 0) {
-							showImage($("f").files[0]);
-						}
-
-						if (window.req) {
-							window.req.abort();
-							// this triggers readyState=4 which will not have the success response status from the server, so we need to clear the error...
-							$("error").innerHTML = '';
-						}
-						window.req = new XMLHttpRequest();
-						req.open("POST", "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload(), true);
-
-						req.onreadystatechange = function(e) {
-							if (req.readyState == 4) {
-								if (req.responseText == '1') {
-									var text = "Your custom link:";
-									if (customUrl === false) {
-										text = "Your short link:";
-									}
-									$("action").innerHTML = "All done!<br>" + text;
-									uploadedToSecrets.push(secret);
-									clearOldUrls();
-								}
-								else {
-									errorHandler('Upload failed: ' + req.responseText);
-								}
-							}
-						}
-
-						req.upload.addEventListener("progress", function(e) {
-							$("progresstext").innerHTML = formatSize(e.loaded, e.total);
-							$("progressfg").style.width = Math.floor(e.loaded / e.total * 100) + "%";
-						}, false);
-
-						req.send(formData);
-					}
-				}, 90);
-
+				$("action").innerHTML = imgLoading + "Uploading...<br>your link will be:";
 				showUrl();
+				aGET('api/v1/clear/' + secret, uploadFile);
 			};
 
 			$("expireAfterFirstDownload").onchange = function() {
@@ -415,7 +328,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				if (!secret) return;
 
 				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
-					+ '<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();">delete</a>)</div>';
+					+ '<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();" id=deletebtn>delete</a>)</div>';
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
 				}
@@ -479,10 +392,109 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				return $("expireAfterFirstDownload").checked ? "true" : "false";
 			}
 
+			function uploadFile() {
+				if (secret === false) {
+					errorHandler(msg_loadingLink);
+					queuedUpload = uploadFile;
+					return;
+				}
+
+				aGET('api/v1/extend/' + secret + '/900'); // Reserve the link for 15 minutes so it can upload
+
+				// Check if the browser has filename support. If not, use the 1997 method of uploading files with a form and iframe... (hello Safari...)
+				if (!$("f").name || $("f").name.length <= 0) {
+					$("fileform").action = "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload();
+					$("fileform").target = "fileframe";
+					$("fileform").submit();
+					uploadedFile = true;
+					$("fileframe").onload = function() {
+						// because clearing it before the upload completed would just be overwritten
+						//   2020: wait, but we're not clearing the link that we just uploaded to, so I don't understand this code or comment (it seems to be a noop to me). TODO remove this and test
+						uploadedToSecrets.push(secret);
+						clearOldUrls();
+						clearTimeout(noprogressmsgtimeout);
+					}
+
+					// Show this only if the upload takes >2 seconds
+					noprogressmsgtimeout = setTimeout(function() {
+						errorHandler('(your browser has limited JavaScript support; upload progress unavailable)');
+					}, 3000);
+
+					t = 400;
+					function checkForUpdate() {
+						aGET('api/v1/check/' + url.replace((location.hostname.indexOf('beta.') != -1 ? 'beta.' : '') + 'dro.pm/', ''), function(data) {
+							if (data == '1') {
+								var text = "";
+								if (customUrl === false) {
+									text = "Your short link:";
+								}
+								else {
+									text = "Your custom link:";
+								}
+								$("action").innerHTML = "All done!<br>" + text;
+							}
+							else {
+								t = Math.min(2750, t + 25);
+								setTimeout(checkForUpdate, t);
+							}
+						});
+					}
+
+					setTimeout(function() {
+						checkForUpdate();
+					}, 750);
+				}
+				else {
+					$("action").innerHTML = "<div id=progressbg><div id=progressfg><div id=progresstext>" + formatSize(0, $("f").files[0].size) + "</div></div></div><br>Your link will be:";
+
+					var formData = new FormData();
+					formData.append('f', $("f").files[0]);
+
+					if ($("f").files[0].type.indexOf("image/") === 0) {
+						showImage($("f").files[0]);
+					}
+
+					if (window.req) {
+						window.req.abort();
+						// this triggers readyState=4 which will not have the success response status from the server, so we need to clear the error...
+						$("error").innerHTML = '';
+					}
+					window.req = new XMLHttpRequest();
+					req.open("POST", "fileman.php?secret=" + secret + "&expireAfterDownload=" + shouldExpireAfterFirstDownload(), true);
+
+					req.onreadystatechange = function(e) {
+						if (req.readyState == 4) {
+							if (req.responseText == '1') {
+								var text = "Your custom link:";
+								if (customUrl === false) {
+									text = "Your short link:";
+								}
+								$("action").innerHTML = "All done!<br>" + text;
+								uploadedToSecrets.push(secret);
+								clearOldUrls();
+							}
+							else {
+								errorHandler('Upload failed: ' + req.responseText);
+							}
+						}
+					}
+
+					req.upload.addEventListener("progress", function(e) {
+						$("progresstext").innerHTML = formatSize(e.loaded, e.total);
+						$("progressfg").style.width = Math.floor(e.loaded / e.total * 100) + "%";
+					}, false);
+
+					req.send(formData);
+				}
+
+				showUrl();
+			}
+
 			function uploadText() {
 				if (secret === false) {
 					if (currentTab == 1) {
 						errorHandler(msg_loadingLink);
+						queuedUpload = uploadText;
 					}
 					return;
 				}
@@ -568,8 +580,9 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 						secret = data[0];
 						secretsDB['shorturl'] = {'secret': secret, 'url': data[1]};
 						if ($("error").innerHTML == msg_loadingLink) {
-							uploadText();
 							clearError();
+							queuedUpload();
+							queuedUpload = function(){};
 						}
 					}
 					catch (e) {
@@ -598,11 +611,19 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 
 			function clearCurrentData() {
-				aGET('api/v1/clear/' + secret);
-				$("url").style.display = 'none';
-				urlShown = false;
-				$("action").innerHTML = defaultActionText[currentTab - 1];
-				$("previewCanvasWrapper").hidden = true;
+				$("deletebtn").innerText = 'deleting...';
+				aGET('api/v1/clear/' + secret, function(data) {
+					if (data !== '1') {
+						errorHandler('Failed to delete, please retry.');
+						$("deletebtn").innerText = 'delete';
+					}
+					else {
+						$("url").style.display = 'none';
+						urlShown = false;
+						$("action").innerHTML = defaultActionText[currentTab - 1];
+						$("previewCanvasWrapper").hidden = true;
+					}
+				});
 				if (window.req) {
 					window.req.abort();
 					// this triggers readyState=4 which will not have the success response status from the server, so we need to clear the error...
