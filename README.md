@@ -42,15 +42,7 @@ wnat to monitor for / rate limit in the future.
 
 **License**
 
-For anything in the `web` folder, EU copyright applies. You may use this code and run it locally
-for the sole purpose of contributing back to the project. Maybe this will one day go commercial
-(I really like the idea but don't have the time to expand it right now) so I don't want to just
-give it away without you at least having to rewrite it. So why do I publish it at all? Because
-I think we all benefit from being able to see the code (privacy and security wise), you are
-welcome to read the code and learn from it, and you can contribute your own features to
-[dro.pm](http://dro.pm) which I will happily host for you!
-
-For anything in the `android` folder, see the `android/dropm.luc/README.md` file.
+GPLv3: see the `./LICENSE` file.
 
 **To do**
 
