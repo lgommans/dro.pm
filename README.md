@@ -44,6 +44,15 @@ wnat to monitor for / rate limit in the future.
 
 GPLv3: see the `./LICENSE` file.
 
+**Security**
+
+Because users can create what looks like files on your domain, they can also do website verification
+and claim your site at third parties. To avoid this, you should identify which third parties are
+relevant to you and block illegitimate verification attempts. In my case, this was done by
+configuring the web server to block user agents containing 'site-verification' (case-insensitive).
+
+You might also want to create a `favicon.ico` and `robots.txt`.
+
 **To do**
 
 There are many ideas I have for this project, but most are hard to place in the UI. The main feature
