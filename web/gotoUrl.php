@@ -14,11 +14,16 @@ if ($_SERVER['HTTP_USER_AGENT'] === 'TelegramBot (like TwitterBot)') {
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
     if ($type == 1) {
-		header('HTTP/1.1 307 Temporary Redirect');
-		header('Location: ' . $data);
-
 		if ($expireAfterDownload == "1") {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
+		}
+		if (isset($_GET['preview'])) {
+			header('Content-Type: text/plain');
+			echo $data;
+		}
+		else {
+			header('HTTP/1.1 307 Temporary Redirect');
+			header('Location: ' . $data);
 		}
 		exit;
 	}
@@ -38,11 +43,25 @@ if ($status !== false) {
 		if (in_array($ext, ['jpg', 'png', 'bmp', 'gif'])) {
 			header('Content-type: image/' . $ext);
 		}
+		else if (isset($_GET['preview']) && in_array($ext, ['json', 'js', 'pdf'])) {
+			if ($ext === 'js') {
+				$ext = 'javascript';
+			}
+			header('Content-disposition: inline; filename="' . $original_fname . '"');
+			header('Content-type: application/' . $ext);
+		}
+		else if (isset($_GET['preview']) && in_array($ext, ['csv', 'css', 'xml'])) {
+			header('Content-type: text/' . $ext);
+		}
 		else if (isset($_GET['preview']) && in_array($ext, ['mp4', 'mkv', 'avi', 'webm', 'ogv', 'mov'])) {
 			header('Content-type: video/' . $ext);
 		}
 		else if (isset($_GET['preview']) && in_array($ext, ['mp3', 'ogg', 'wav', 'aac', 'opus'])) {
 			header('Content-type: audio/' . $ext);
+		}
+		else if (isset($_GET['preview'])) {
+			// for extensions txt, css, html
+			header('Content-type: text/plain');
 		}
 		else {
 			header('Content-type: application/octet-stream');
