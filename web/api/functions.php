@@ -318,6 +318,13 @@
 		clearFile($secret);
 
 		$host = parse_url(trim($data), PHP_URL_HOST);
+		$missingproto = false;
+		if (substr($data, 0, 4) === 'www.') {
+			// seems to have wanted to post a link but missing protocol, let's prepend one and retry...
+			$host = parse_url('https://' . trim($data), PHP_URL_HOST);
+			$missingproto = true;
+		}
+
 		if ($host === false || empty($host) || strlen($data) > 21000 || strpos(trim($data), "\n") !== false) {
 			// Doesn't look like a URL, so it's a paste!
 			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")
@@ -328,6 +335,9 @@
 		else {
 			$data = trim($data);
 			$type = '0';
+			if ($missingproto) {
+				$data = 'https://' . $data; // Might want to use http:// because it works more universally but I think that should be rare enough we can prioritize security here
+			}
 		}
 
 		$db->query('UPDATE shorts '
