@@ -1,4 +1,4 @@
-# [Drop 'em](http://dro.pm) - share files, links, text
+# [dro.pm](http://dro.pm) - share files, links, text
 
 The project now contains a web and android part. This README is mostly about the web part.
 
