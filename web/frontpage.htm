@@ -1,16 +1,22 @@
 <!--
-function dropm { result=$(curl -sS --user-agent cli --form "f=@$1" "https://dro.pm/fileman.php?secret=$2"); if [ "$result" == "1" ]; then echo Done; return; fi; echo "$result"; }
+function dropm { result=$(curl -sS --user-agent cli --form "f=@$1" "https://dro.pm/fileman.php?secret=$2"); if [ "$result" == "1" ]; then echo Updated; return; fi; echo "$result"; }
 You can easily import this using: """source <(curl https://dro.pm | head -2 | tail -1)""" (without quotes). See https://pastebin.com/HUK0beKa for more information.
+Add it to .bashrc (or your favorite shell's equivalent) to make the function permanently available.
 -->
+
 <!DOCTYPE html>
+
 <html>
 	<head>
 		<meta charset="utf-8">
 		<title>dro.pm - Extremely Short Links</title>
+		<meta name="viewport" content="width=device-width">
+		<meta name="theme-color" content="#44454a">
 	</head>
-	<body>
+
+	<body bgcolor="#44454a">
 		<div id="topbar">
-			<span id="dropem">dro.p <span style="color:#bbb">'e</span>m</span>
+			<span id="dropem">dro.pm</span>
 			<div class="subtitle">Extremely short links</div>
 		</div>
 		<center>
@@ -23,18 +29,18 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				</div>
 			</div>
 			<span id="sendToDevice" style="display: none; margin-bottom: 20px; font-size: 14pt;">
-				<br><br><br>
-				<span style="font-weight: bold; font-size: 30pt;">1. Choose your link</span><br>
+				<br>
+				<span id=chooseyourlink>1. Choose your link</span><br>
 				<input maxlength=250 id=customLink> <span id=customLinkValidation></span>
 				<br><br>
-				<label><input type=checkbox id=expireAfterFirstDownload> Delete contents immediately after opening</label>
+				<label><input type=checkbox id=expireAfterFirstDownload> Delete immediately upon opening</label>
 				<br><br>
 			</span>
-			<div id="action" style="font-size: 30pt; font-weight: bold;">Loading...</div>
+			<div id="action">Loading...</div>
 			<div id="url" style="display:none"></div>
 			<div id="error" style="display:none"></div>
 			<div>
-				<textarea id="toshorten" wrap="off" style="width:350px;height:18px;padding-top:1px;overflow:auto;"></textarea>
+				<textarea id="toshorten" wrap="off"></textarea>
 				<noscript>
 					<input type="submit" value="Shorten!"><br>
 					<br>
@@ -58,20 +64,40 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			Image preview:<br>
 			<canvas style="border:1px solid grey;" id="previewCanvas"></canvas>
 		</div>
-		<center>
-			<div style="margin-top: 40px; color: #fff;" id=info>
-				<a href="javascript:info()">More info</a> |
-				<a href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a>
-			</div>
-		</center>
+		<div style="margin-top: 40px; color: #fff;" id=info>
+			<center>
+				<span style="opacity: 0.8" id=protipspan></span>
+				<a href="javascript:info()">More info</a> | <a href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a><br>
+				<span style="opacity: 0.7">By using this site, you disagree to the use of cookies. <a id=cookiesok href='javascript:$("cookiesok").outerHTML = "<br>Privacy provides you the best experience, not tracking.";void(0);'>Ok</a></span>
+			</center>
+		</div>
 		<script>
-// TODO: reAllocate shortcode if t>60s
 			var msg_loadingLink = "Loading your link...";
 			var pasteimg_sizeratio = 0.6;
-			var defaultActionText = ["Press Ctrl + V<span style='font-size: 15pt;position:relative;top:-25px;'><br>to paste your link or text</span>",
+			var defaultActionText = ["Press Ctrl + V<span style='font-size: 15pt'><br>to paste a link, text, or image</span>",
 				"2. Share text, a link or a file"];
+			var protips = [
+				"you can overwrite your existing link by<br>editing the input field or uploading a new file.",
+				"know where a URL goes to before visiting:<br>dro.pm/o/view shows the link destination",
+				"git doesn't clone from redirects. A fix:<br><tt>curl https://dro.pm/o/view | xargs git clone</tt>",
+				"to avoid a download, use /view.<br>dro.pm/o/view &ndash; works for pdf, mp3, etc.",
+				"want/need a file extension? No problem!<br>Extensions are ignored: dro.pm/o.png",
+				"files can be up to 2 GB (larger on request).<br>You might also like <a style='opacity: 0.7' href='https://file.pizza' target='_blank' rel=noopener>file.pizza</a> for streaming large files",
+				"upload files from a shell,<br>see:&nbsp;&nbsp;<tt>curl https://dro.pm | head</tt>",
+				"dro.pm links work in your shell.<br>You can <tt>curl</tt> or <tt>wget</tt> texts or files.",
+				"you can paste images from the clipboard,<br>thanks to a contribution from MagicLegend!",
+				"links have a delete button,<br>but remember: sharing is caring :)",
+				"<span style='font-variant: small-caps'>this site supports caps lock.<br>DRO.PM/O is the same as</span> dro.pm/o",
+				"make backups. If your accounts<br>are hacked, would you lose everything?<br>Download that spotify song list as .txt!",
+				"ctrl+shift+t reopens the last-closed tab",
+				// Hello there, protip reader!  Wanna have a real secret protip?  dro.pm is open source :D
+				// You can add features and I will host them for you. https://github.com/lgommans/dro.pm
+			];
 
 			function $(id){ return document.getElementById(id); }
+
+			$("protipspan").innerHTML = 'Protip: ' + protips[Math.floor(Math.random() * protips.length)] + '<br><br>';
+
 			$("action").innerHTML = defaultActionText[0];
 
 			$("toshorten").focus();
@@ -309,19 +335,25 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 
 			function info() {
-				$("info").innerHTML = '<div style="color: #FFB030; font-size: 2em;">Info</div>'
-					+ 'Here you can make very short links that you can share over the phone, tell someone sitting next to you, write on a whiteboard, etc. '
-					+ 'You can upload files, share some text, or share a link.<br>'
+				$("info").style.maxWidth = '600px';
+				$("info").style.marginRight = 'auto';
+				$("info").style.marginLeft = 'auto';
+				$("info").innerHTML = '<div style="color: #FFB030; font-size: 2em; text-align: center;">Info</div>'
+					+ 'Extremely short links can be shared over the phone, shown to someone sitting next to you, written on a whiteboard, etc. '
+					+ 'Upload files, paste text, or share a link.<br>'
 					+ '<br>'
-					+ 'The links are case insensitive (<tt style="font-size: 12pt;">dro.pm/ab</tt> and <tt style="font-size: 12pt;">dro.pm/AB</tt> are the same) and do not include similar '
+					+ 'The links are case-insensitive (<tt style="font-size: 12pt;">dro.pm/ab</tt> and <tt style="font-size: 12pt;">dro.pm/AB</tt> are the same) and do not include similar '
 					+ 'characters like i and 1 or o and zero. They expire such that the convenient short links become available for the next person.<br>'
 					+ '<br>'
-					+ 'To report illegal stuff (e.g. phishing), a security issue, or tell me something else, use the contact info '
+					+ 'To report illegal content (e.g. phishing), a security issue, or tell me something else, use the contact info '
 					+ '<a href="https://lucgommans.nl">on my personal website</a>. Note that links really do expire permanently after 18 hours, '
 					+ 'so you should capture evidence of illegal content.<br>'
 					+ '<br>'
 					+ 'You can also upload files from the command line, as simply as:<br><tt>user@localhost:~$ dropm example.mp3</tt><br>'
-					+ 'See <a href="http://pastebin.com/HUK0beKa">http://pastebin.com/HUK0beKa</a>';
+					+ 'See <a href="https://pastebin.com/HUK0beKa">pastebin.com/HUK0beKa</a><br>'
+					+ '<br>'
+					+ 'This site does not make use of cookies, fingerprinting, or similar techniques. Extorting you to consent to tracking for the "best experience" is a lie.<br>'
+					;
 			}
 
 			function showUrl() {
@@ -543,7 +575,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 					setUrl(secretsDB['shorturl']['url'], true);
 					//$("url").innerHTML = '';
 					//urlShown = false;
-					$("action").innerHTML = "Share text, a link or a file<br>&nbsp;";
+					$("action").innerHTML = "<span style='line-height: 1'>Share text, a link or a file</span>";
 
 					if ((uploadedFile || $("toshorten").value.length > 0) && oldsecret !== false && secret !== false) {
 						aGET('/api/v1/move/' + oldsecret + '/' + secret);
@@ -633,6 +665,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 
 			setInterval($("toshorten").onchange, 250);
 			allocateURI();
+			// causes ugly flash of white, and also, it's almost invisible?! Should check on another monitor... document.body.style.background = "url('res/img/bg.jpg')";
 		</script>
 		<style>
 			#topbar {
@@ -654,8 +687,9 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			body {
 				font-family: Arial;
 				margin: 0;
-				background: url('res/img/bg.jpg');
 				color: #FFB030;
+				text-size-adjust: none;
+				-webkit-text-size-adjust: none;
 			}
 			#url {
 				text-align: center;
@@ -678,7 +712,9 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				margin: 0 auto 0 auto;
 			}
 			#tabs {
-				height: 80px;
+				margin-bottom: 27px;
+				margin-top: 0px;
+				padding-top: 0px;
 				display: inline-block;
 			}
 			.tab {
@@ -686,7 +722,7 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 				padding-top: 8px;
 				padding-left: 25px;
 				padding-right: 25px;
-				height: 36px;
+				height: 35px;
 				border: 1px solid #DDD;
 				border-top: none;
 				font-size: 14pt;
@@ -696,6 +732,23 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			#tabs .unselected {
 				background-color: transparent;
 				cursor: pointer;
+			}
+			#action {
+				font-size: 2.5em;
+				font-weight: bold;
+				line-height: 0.5;
+				margin-bottom: 35px;
+				margin-top: 11px;
+			}
+			#chooseyourlink {
+				font-weight: bold;
+				font-size: 2.5em;
+			}
+			#toshorten {
+				width: 350px;
+				height: 18px;
+				padding-top: 1px;
+				overflow: auto;
 			}
 
 			#progressbg {
@@ -722,6 +775,29 @@ You can easily import this using: """source <(curl https://dro.pm | head -2 | ta
 			}
 			a {
 				color: rgb(0, 215, 251);
+			}
+
+			@media(max-width: 767px) {
+				/* mobile... hopefully... or something... why the heck is what you're *actually* trying to measure, namely actual-device-width<10cm, deprecated */
+				#topbar {
+					font-size: 3em;
+					padding: 10px 0 20px 0;
+				}
+				#chooseyourlink {
+					font-size: 2em;
+				}
+				.tab {
+					height: 32px;
+				}
+				#toshorten {
+					width: 300px;
+				}
+				#action {
+					font-size: 2em;
+					line-height: 0.8;
+					margin-top: 15px;
+					margin-bottom: 30px;
+				}
 			}
 		</style>
 	</body>
