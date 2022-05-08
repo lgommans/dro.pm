@@ -186,7 +186,7 @@ Add it to .bashrc (or your favorite shell's equivalent) to make the function per
 					clearError();
 				}
 
-				$("action").innerHTML = imgLoading + "Uploading...<br>your link will be:";
+				$("action").innerHTML = imgLoading + "Uploading...<br><br>your link will be:";
 				showUrl();
 				aGET('api/v1/clear/' + secret, uploadFile);
 			};
@@ -447,7 +447,7 @@ Add it to .bashrc (or your favorite shell's equivalent) to make the function per
 						clearTimeout(noprogressmsgtimeout);
 					}
 
-					// Show this only if the upload takes >2 seconds
+					// Show this only if the upload takes a while
 					noprogressmsgtimeout = setTimeout(function() {
 						errorHandler('(your browser has limited JavaScript support; upload progress unavailable)');
 					}, 3000);
@@ -458,12 +458,12 @@ Add it to .bashrc (or your favorite shell's equivalent) to make the function per
 							if (data == '1') {
 								var text = "";
 								if (customUrl === false) {
-									text = "Your short link:";
+									text = "Your link:";
 								}
 								else {
-									text = "Your custom link:";
+									text = "Your link:";
 								}
-								$("action").innerHTML = "All done!<br>" + text;
+								$("action").innerHTML = "All done!<br><br>" + text;
 							}
 							else {
 								t = Math.min(2750, t + 25);
@@ -477,7 +477,8 @@ Add it to .bashrc (or your favorite shell's equivalent) to make the function per
 					}, 750);
 				}
 				else {
-					$("action").innerHTML = "<div id=progressbg><div id=progressfg><div id=progresstext>" + formatSize(0, $("f").files[0].size) + "</div></div></div><br>Your link will be:";
+					// Browser has filename support
+					$("action").innerHTML = "<div id=progressbg><div id=progressfg><div id=progresstext>" + formatSize(0, $("f").files[0].size) + "</div></div></div><br><br>Your link will be:";
 
 					var formData = new FormData();
 					formData.append('f', $("f").files[0]);
@@ -501,7 +502,7 @@ Add it to .bashrc (or your favorite shell's equivalent) to make the function per
 								if (customUrl === false) {
 									text = "Your short link:";
 								}
-								$("action").innerHTML = "All done!<br>" + text;
+								$("action").innerHTML = "All done!<br><br>" + text;
 								uploadedToSecrets.push(secret);
 								clearOldUrls();
 							}
@@ -758,6 +759,7 @@ Add it to .bashrc (or your favorite shell's equivalent) to make the function per
 				width: 350px;
 				text-align: right;
 				vertical-align: center;
+				line-height: 1;
 			}
 			#progressfg {
 				background-color: #FFB030;
