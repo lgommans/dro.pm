@@ -317,27 +317,37 @@
 
 		clearFile($secret);
 
-		$host = parse_url(trim($data), PHP_URL_HOST);
-		$missingproto = false;
-		if (substr($data, 0, 4) === 'www.') {
-			// seems to have wanted to post a link but missing protocol, let's prepend one and retry...
-			$host = parse_url('https://' . trim($data), PHP_URL_HOST);
-			$missingproto = true;
+		if (strlen($data) > 10e6) { // arbitrary limit to prevent resource exhaustion by extra URL checking we do
+			$validurl = false;
+		}
+		else {
+			// Instead of testing only for www., we could also just try prepending a protocol and see if it validates. Not doing that right now because it might give too many false positives.
+			// Better unintended viewing of a URL than unintended redirection to something which they might have meant to be for viewing.
+			if (substr($data, 0, 4) === 'www.') { // seems to have wanted to post a link but missing protocol, let's prepend one and retry...
+				// Might want to use http:// because it works more universally but I think that should be rare enough we can prioritize security here
+				$validurl = filter_var('https://' . trim($data), FILTER_VALIDATE_URL);
+				if ($validurl !== false) {
+					$data = $validurl;
+				}
+			}
+			else {
+				// trim() because people like to (unnecessarily) press enter to submit out of habit
+				$validurl = filter_var(trim($data), FILTER_VALIDATE_URL);
+				if ($validurl !== false) {
+					$data = $validurl; // might have been trimmed or otherwise filtered by this function
+				}
+			}
 		}
 
-		if ($host === false || empty($host) || strlen($data) > 21000 || strpos(trim($data), "\n") !== false) {
-			// Doesn't look like a URL, so it's a paste!
+		if ($validurl === false || empty($validurl)) {
+			// Doesn't parse as a URL, so it's a paste!
 			$db->query('INSERT INTO pastes VALUES("' . $db->escape_string($data) . '", "' . $db->escape_string($secret) . '")
 				ON DUPLICATE KEY UPDATE data = "' . $db->escape_string($data) . '"') or die('Database error 62872');
 			$data = $secret;
 			$type = '1';
 		}
 		else {
-			$data = trim($data);
 			$type = '0';
-			if ($missingproto) {
-				$data = 'https://' . $data; // Might want to use http:// because it works more universally but I think that should be rare enough we can prioritize security here
-			}
 		}
 
 		$db->query('UPDATE shorts '
