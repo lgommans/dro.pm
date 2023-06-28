@@ -1,7 +1,10 @@
 <!--
-function dropm { result=$(curl -sS --user-agent cli --form "f=@$1" "https://dro.pm/fileman.php?secret=$2"); if [ "$result" == "1" ]; then echo Updated; return; fi; echo "$result"; }
-You can easily import this using: """source <(curl https://dro.pm | head -2 | tail -1)""" (without quotes). See https://pastebin.com/HUK0beKa for more information.
-Add it to .bashrc (or your favorite shell's equivalent) to make the function permanently available.
+function dropm { result=$(curl -sS --user-agent cli --form "f=@$1" "https://dro.pm/fileman.php?secret=$2"); if [ "$result" = "1" ]; then echo Updated; return; fi; echo "$result"; }
+
+Import this by using:
+  source <(curl https://dro.pm | head -2 | tail -1)
+
+See https://dro.pm/shell.txt for more information.
 -->
 
 <!DOCTYPE html>
@@ -32,6 +35,7 @@ Add it to .bashrc (or your favorite shell's equivalent) to make the function per
 				<br>
 				<span id=chooseyourlink>1. Choose your link</span><br>
 				<input maxlength=250 id=customLink> <span id=customLinkValidation></span>
+				<!-- TODO shuffle button using cryptographic random -->
 				<br><br>
 				<label><input type=checkbox id=expireAfterFirstDownload> Delete immediately upon opening</label>
 				<br><br>

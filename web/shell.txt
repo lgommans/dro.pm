@@ -1,0 +1,55 @@
+Dro.pm uploader - Version 1.2 - check https://dro.pm/shell.txt for new versions.
+
+---
+
+Put this in your .bashrc, or the rc file of your favorite shell:
+
+  function dropm {
+    result=$(curl --silent --user-agent cli --form "f=@$1" "https://dro.pm/fileman.php?secret=$2");
+    if [ "$result" = "1" ]; then
+        echo Updated;
+        return;
+    fi;
+    echo "$result" | awk '{print $2}' | tr -d \\n | xsel -b;
+    echo "$result";
+  }
+
+Then use it like this:
+
+  $ dropm my_file.zip
+
+It will give you a code and a short link as result. The short link will automatically be copied to your clipboard if you have xsel installed. Example output:
+
+  5cae34e31c52bd5fee451cc347646a74314a9315 dro.pm/d
+
+The code you can use to change the URL like this:
+
+  $ dropm another_file.bmp 5cae34e31c52bd5fee451cc347646a74314a9315
+
+---
+
+If you want to use the function temporarily, without installation, you can easily grab the code from the website itself:
+
+  $ curl https://dro.pm | head
+
+The second line of the HTML source code contains the Bash function (same as above) which you can copy and just paste in your terminal.
+If you don't have a mouse to select and copy the text, use this slightly more complicated command:
+
+  $ source <(curl https://dro.pm | head -2 | tail -1)
+
+You can check that it was successful by using `type dropm`, which will show the code that you just "sourced" (imported).
+
+---
+
+Submitting links or plain text is currently not supported from the command line, only file uploads. Do you want to have this feature? Please let me know! https://github.com/lgommans/dro.pm/issues
+
+---
+
+Notes:
+
+- In short, uploading works like this: curl -sA cli -F f=@my_file.zip https://dro.pm/fileman.php
+
+- If you don't want the automatic clipboard copying, remove the 'echo "$result | ... | xsel -b;' line.
+
+- Upload progress can be shown by removing --silent.
+
