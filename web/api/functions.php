@@ -11,7 +11,7 @@
 		}
 		else {
 			$exists = codeExists($code);
-			if ($exists === "semi") {
+			if ($exists === 'semi') {
 				clearUrl(getSecretByCode($code));
 				$db->query('DELETE FROM shorts WHERE `key` = "' . $db->escape_string($code) . '"') or die('Database error 95184');
 			}
@@ -19,7 +19,8 @@
 				return [true, $code];
 			}
 			else {
-				$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $db->escape_string($code) . "', -1, '', " . (time() + 900) . ", '" . $secret . "')") or die('Database error 81935');
+				// TODO why did this error trigger when pasting a custom link
+				$db->query("INSERT INTO shorts (`key`, `type`, `value`, `expires`, `secret`) VALUES('" . $db->escape_string($code) . "', -1, '', " . (time() + 900) . ", '" . $secret . "')") or die('Database error 81935: ' . $db->error);
 			}
 		}
 
@@ -39,7 +40,7 @@
 			if ($result[1] == 2) {
 				$result = $db->query('SELECT `data` FROM pastes WHERE `secret` = "' . $db->escape_string($secret) . '"') or die('Database error 95279');
 				if ($result->fetch_row()[0] == 'This link has already been downloaded.') {
-					return "semi";
+					return 'semi';
 				}
 			}
 			return true;
@@ -48,7 +49,7 @@
 	}
 
 	function getAllowedCharset() {
-		return ["a","b","c","d","e","f","g","h","j","k","m","n","p","q","r","s","t","u","v","w","x","y","z","2","3","4","5","6","7","8","9"]; // upon modifying the code below, be sure to update this value ;)
+		return ['a','b','c','d','e','f','g','h','j','k','m','n','p','q','r','s','t','u','v','w','x','y','z','2','3','4','5','6','7','8','9']; // upon modifying the code below, be sure to update this value ;)
 
 		$allowedCharSet = 'a-hj-km-np-z2-9';
 		$chars = array();
@@ -154,9 +155,10 @@
 		return $shortcode;
 	}
 
-	// Returns [dataAvailable, dataType, data]
+	// Returns [dataAvailable, dataType, data, expireAfterDownload]
 	// Where dataAvailable = true when there is data, false when there is no data, or string "2" when there is an error
-	// Where dataType = 1 for redirect, 2 for html to display, 3 for a file download
+	// Where dataType = 0 for nonexistent link, 1 for redirect, 2 for html to display, 3 for a file download
+	// The remaining parameters are optional (data, expireAfterDownload) and have changing types (data), depending on the type
 	function tryGet($shortcode, $checkExists = false) {
 		global $db, $uploaddir;
 
@@ -165,7 +167,7 @@
 			if ($checkExists) {
 				$result = $db->query('SELECT `value`, `expireAfterDownload` FROM shorts WHERE `key` = "' . $db->escape_string($shortcode) . '" AND `expires` > ' . time()) or die('Database error 7150183');
 				if ($result->num_rows != 1) {
-					return array("2", 2, 'This link does not exist! Perhaps you would like to <a href="./">shorten your own?</a>', false);
+					return array('2', 0);
 				}
 			}
 			return array(false, null, null, false);
