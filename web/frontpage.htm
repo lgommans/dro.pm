@@ -89,9 +89,11 @@ See https://dro.pm/shell.txt for more information.
 				"files can be up to 2 GB (larger on request).<br>You might also like <a style='opacity: 0.7' href='https://wormhole.app' target='_blank' rel=noopener>wormhole.app</a> for streaming large files",
 				"upload files from a shell,<br>see:&nbsp;&nbsp;<tt>curl https://dro.pm | head</tt>",
 				"dro.pm links work in your shell.<br>You can <tt>curl</tt> or <tt>wget</tt> texts or files.",
+				"add any extension to the link;<br><tt>wget dro.pm/a.jpg</tt> avoids needing <tt>-O</tt>",
 				"you can paste images from the clipboard,<br>thanks to a contribution from MagicLegend!",
 				"links have a delete button,<br>but remember: sharing is caring :)",
 				"<span style='font-variant: small-caps'>this site supports caps lock.<br>DRO.PM/O is the same as</span> dro.pm/o",
+				"dropm doesn't compress (jpegify) your images", //, <span style='font-size: 0.7em'>videos, <span style='font-size: 0.76em'>songs, <span style='font-size: 0.76em'>fanfic, <span style='font-size: 0.76em'>cars, <span style='font-size: 0.76em'>warez...</span></span></span></span></span>",
 				"make backups. If your accounts<br>are hacked, would you lose everything?<br>Download that spotify song list as .txt!",
 				"ctrl+shift+t reopens the last-closed tab",
 				// Hello there, protip reader!  Wanna have a real secret protip?  dro.pm is open source :D
@@ -115,6 +117,7 @@ See https://dro.pm/shell.txt for more information.
 			var uploadedFile = false; // whether we uploaded a file or text/url
 			var toshortenprevval = null;
 			var queuedUpload = function(){};
+			var ignorePasteEvent = false;
 
 			var imgLoading = "<img src='res/img/loading-dark.gif' height='25'/> ";
 
@@ -275,6 +278,11 @@ See https://dro.pm/shell.txt for more information.
 			};
 
 			window.addEventListener("paste", function(pasteEvent) {
+				if (ignorePasteEvent) {
+					ignorePasteEvent = false;
+					return;
+				}
+
 				if (!pasteEvent.clipboardData) {
 					return;
 				}
@@ -311,6 +319,11 @@ See https://dro.pm/shell.txt for more information.
 				$('f').files = dt.files;
 				$('f').onchange(); // the onchange doesn't trigger on its own despite, y'know, it having changed
 			}, false);
+
+			$("customLink").onpaste = function(ev) {
+				ignorePasteEvent = true;
+			};
+
 
 			$("toshorten").onkeydown = function(ev) {
 				if (ev.key == 'z' && ev.ctrlKey && toshortenprevval) {
@@ -363,8 +376,10 @@ See https://dro.pm/shell.txt for more information.
 			function showUrl() {
 				if (!secret) return;
 
-				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span> <img src="res/img/exturl.png" style="cursor:pointer" height="30" onclick="window.open(\'//' + url + '\');">'
-					+ '<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();" id=deletebtn>delete</a>)</div>';
+				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span>&nbsp;'
+					+ `<img src="res/img/exturl.png" style="cursor:pointer" height="27" onclick="window.open('//' + url + '');">&nbsp;`
+					+ `<img src="res/img/qr.png" style="cursor:pointer" height="27" onclick="showQR();">`
+					+ `<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();" id=deletebtn>delete</a>)</div>`;
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
 				}
@@ -372,6 +387,11 @@ See https://dro.pm/shell.txt for more information.
 					$("url").style.display = "block";
 				}
 				urlShown = true;
+			}
+
+			function showQR() {
+				document.querySelector(".urlSubtitle").innerHTML += '<br><br><img id=qrelement>';
+				$('qrelement').src = 'api/v2/getqr/' + url.split('/')[1];
 			}
 
 			function setUrl(shortcode, dontClearOldUrls) {

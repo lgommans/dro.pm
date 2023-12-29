@@ -2,6 +2,7 @@ RewriteEngine On
 RewriteRule ^$																index.php
 RewriteRule ^v([0-9])/?$													index.php?v=$1&cmd=gibberish
 RewriteRule ^v([0-9])/([a-zA-Z0-9-]*)/?$									index.php?v=$1&cmd=$2
+RewriteRule ^v([0-9])/getqr/([a-zA-Z0-9-]+)/?$								index.php?v=$1&cmd=getqr&code=$2
 RewriteRule ^v([0-9])/setExpireAfterDownload/([0-9a-f]{40})/(true|false)/?$	index.php?v=$1&cmd=setExpireAfterDownload&secret=$2&expireAfterDownload=$3
 RewriteRule ^v([0-9])/allocate/([a-zA-Z0-9-]{4,250})/?$						index.php?v=$1&cmd=allocate&code=$2
 RewriteRule ^v([0-9])/(move)/([0-9a-f]{40})/([0-9a-f]{40})/?$				index.php?v=$1&cmd=$2&oldsecret=$3&newsecret=$4

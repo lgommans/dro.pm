@@ -2,7 +2,7 @@
 	function error($message = 'A request was sent that could not be understood', $status = '400 Bad Request', $includeDefaultMessage = true) {
 		header('HTTP/1.1 ' . $status);
 		if ($includeDefaultMessage) {
-			$defaultMessage = '. API documentation is currently unavailable. You can however always contact the author twitter.com/lucgommans';
+			$defaultMessage = '. API documentation is currently unavailable, but feel free to contact lgms.nl/email for help!';
 		}
 		echo '<h3>' . $status . '</h3>' . $message . $defaultMessage;
 		exit;
@@ -45,6 +45,15 @@
 			$secret = $db->escape_string($_GET['secret']);
 			clearUrl($secret);
 			die('1');
+
+		case 'getqr':
+			if (strlen($_GET['code']) > 255) {
+				die('Code too long');
+			}
+			require('phpqrcode/qrlib.php');
+			// error correction L should be best in theory, but from quickly/subjective testing in practice, H seems better? Choose a middle ground... none of the options were clearly bad.
+			QRcode::png('https://dro.pm/' . $_GET['code'], false, 'M', 8, 2);
+			exit;
 
 		default:
 			error('Unknown command or no command specified');
