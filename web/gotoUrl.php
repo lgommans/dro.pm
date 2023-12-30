@@ -39,6 +39,7 @@ if ($status !== false) {
 	else if ($type == 3) {
 		$fpath = $data[0];
 		$original_fname = $data[1];
+		$escaped_original_fname = str_replace('"', '\\"', str_replace('\\', '\\\\', $original_fname));
 		$ext = strtolower(pathinfo($original_fname, PATHINFO_EXTENSION));
 		if (in_array($ext, ['jpg', 'png', 'bmp', 'gif'])) {
 			header('Content-type: image/' . $ext);
@@ -47,7 +48,7 @@ if ($status !== false) {
 			if ($ext === 'js') {
 				$ext = 'javascript';
 			}
-			header('Content-disposition: inline; filename="' . $original_fname . '"');
+			header('Content-disposition: inline; filename="' . $escaped_original_fname . '"');
 			header('Content-type: application/' . $ext);
 		}
 		else if (isset($_GET['preview']) && in_array($ext, ['csv', 'css', 'xml'])) {
@@ -65,7 +66,7 @@ if ($status !== false) {
 		}
 		else {
 			header('Content-type: application/octet-stream');
-			header('Content-disposition: attachment; filename="' . $original_fname . '"');
+			header('Content-disposition: attachment; filename="' . $escaped_original_fname . '"');
 		}
 		$fsize = filesize($fpath);
 		header('Content-Length: ' . $fsize);
