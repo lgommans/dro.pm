@@ -5,6 +5,11 @@
 	function allocate($code = false, $ApiVersion = 1) {
 		global $db;
 
+		if (strlen($code) > 250) {
+			header('HTTP/1.1 400 Bad Request');
+			die('Requested short link is too long (the maximum is 250 characters)');
+		}
+
 		$secret = substr(hash('sha256', openssl_random_pseudo_bytes(20)), 0, 40);
 		if (empty($code)) {
 			$code = getNewCode($secret);
