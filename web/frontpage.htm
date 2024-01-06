@@ -377,8 +377,8 @@ See https://dro.pm/shell.txt for more information.
 				if (!secret) return;
 
 				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span>&nbsp;'
-					+ `<img src="res/img/exturl.png" style="cursor:pointer" height="27" onclick="window.open('//' + url + '');">&nbsp;`
-					+ `<img src="res/img/qr.png" style="cursor:pointer" height="27" onclick="showQR();">`
+					+ `<img src="res/img/exturl.png" style="cursor:pointer" height="25" onclick="window.open('//' + url + '');">&nbsp;`
+					+ `<img src="res/img/qr.png" style="cursor:pointer" onclick="showQR();">`
 					+ `<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();" id=deletebtn>delete</a>)</div>`;
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
