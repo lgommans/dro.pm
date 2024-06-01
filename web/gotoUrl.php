@@ -13,7 +13,12 @@ if ($_SERVER['HTTP_USER_AGENT'] === 'TelegramBot (like TwitterBot)') {
 
 list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
 if ($status !== false) {
-    if ($type == 1) {
+	if ($type == 0) {
+		header('HTTP/1.1 404 Not Found');
+		print('This link does not exist (anymore). Perhaps you would like to <a href="./">shorten your own?</a>');
+		exit;
+	}
+    else if ($type == 1) {
 		if ($expireAfterDownload == "1") {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
 		}
@@ -41,7 +46,8 @@ if ($status !== false) {
 		$original_fname = $data[1];
 		$escaped_original_fname = str_replace('"', '\\"', str_replace('\\', '\\\\', $original_fname));
 		$ext = strtolower(pathinfo($original_fname, PATHINFO_EXTENSION));
-		if (in_array($ext, ['jpg', 'png', 'bmp', 'gif'])) {
+		if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'gif'])) {
+			// TODO SVG support with denied scripting
 			header('Content-type: image/' . $ext);
 		}
 		else if (isset($_GET['preview']) && in_array($ext, ['json', 'js', 'pdf'])) {
@@ -60,8 +66,10 @@ if ($status !== false) {
 		else if (isset($_GET['preview']) && in_array($ext, ['mp3', 'ogg', 'wav', 'aac', 'opus'])) {
 			header('Content-type: audio/' . $ext);
 		}
-		else if (isset($_GET['preview'])) {
-			// for extensions txt, css, html
+		// can probably incorporate more from https://www.file-extensions.org/filetype/extension/name/text-files
+		// or should we just detect if it consists of valid ascii/utf-8/utf-16 and, if so, set it to type=text encoding=detected?
+		else if (isset($_GET['preview']) && in_array($ext, ['html', 'htm', 'html5', 'txt', 'log', 'nfo', 'asc', 'text', 'srt', 'sub', 'm3u', 'm3u8', 'tsv', 'cnf', 'conf', 'cfg', 'vim', 'vimrc', 'bashrc', 'sh', 'bash', 'ps1', 'bat', 'cmd', 'py', 'c', 'cpp', 'h', 'hpp', 'cs', 'java', 'lua', 'php', 'gml', 'coffee', 'pl', 'pas', 'go', 'rs', 'swift', 'rb', 'hs', 'sql', 'r', 'vbs', 'ts', 'kt', 'scala', 'dart', 'clj', 'nim', 'zig', 'mathml', 'md', 'markdown', 'ascii', 'reg', 'yml', 'yaml', 'dtd', 'xsd', 'smali', 'vcf', 'ics', 'icalendar', 'ical', 'ibf', 'sha1', 'sha256', 'shasum', 'sha256sum', 'sha152', 'sha512sum', 'md5'])) {
+			// we don't want to execute html, so treat that as txt
 			header('Content-type: text/plain');
 		}
 		else {
