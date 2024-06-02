@@ -100,29 +100,32 @@ if ($status !== false) {
 }
 
 ?>
-<br>
-<br>
-<br><!-- who ever reads the first line of corner text? -->
-<br>
+<style>
+	body {
+		font-size: 17px;
+		padding-top: 72px; /* who ever reads the first line of corner text? */
+	}
+</style>
 <strong>This link exists but is empty.</strong> Perhaps the sender is still uploading the file.<br>
 <br>
 This page automatically loads when it becomes available.<br>
 <br>
 <span id='lastcheck'></span>
-<noscript><font color=red>JavaScript is disabled. Cannot check for update.</font></noscript>
+<noscript><meta http-equiv=refresh content=4></noscript>
 
 <script>
 	t = 350;
 	
 	function checkForUpdate() {
-		document.getElementById('lastcheck').innerHTML += " <img src='res/img/loading.gif'> <i>now checking...</i>";
-		aGET('api/v1/check/<?php echo htmlspecialchars($_GET['shortcode']); ?>', function(data) {
+		document.getElementById('lastcheck').innerHTML += " <img src='res/img/loading.gif' alt='loading animation' title='Loading...'>";
+		aGET('api/v1/check/<?php echo htmlspecialchars($_GET['shortcode'], ENT_COMPAT | ENT_HTML401 | ENT_QUOTES, 'UTF-8'); ?>', function(data) {
 			if (data == '1') {
+				document.querySelector('body').innerHTML = 'Contents detected, page is being reloaded. If you still see this message, a download should probably have appeared.';
 				location.reload();
 			}
 			else {
 				setTimeout(checkForUpdate, t *= 1.1);
-				document.getElementById('lastcheck').innerText = 'Last check: ' + new Date().toLocaleTimeString() + '. Next check will be in ' + Math.round(t/100)/10 + ' second(s).';
+				document.getElementById('lastcheck').innerText = 'Last check: ' + new Date().toLocaleTimeString() + '.' + (t > 5000 ? (' Next check will be in ' + Math.round(t/100)/10 + ' second(s).') : '');
 			}
 		});
 	}

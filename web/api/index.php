@@ -46,6 +46,7 @@
 			clearUrl($secret);
 			die('1');
 
+		// TODO on second click, would be cool to show the smaller (=scannable from further away) aztec code using e.g. https://github.com/z38/metzli
 		case 'getqr':
 			if (strlen($_GET['code']) > 255) {
 				die('Code too long');
@@ -68,8 +69,8 @@
 			if ($status === true) {
 				die('1');
 			}
-			usleep(250 * 1000);
-		} while($i++ < 10);
+			usleep(300 * 1000);
+		} while($i++ < 5);
 		die("0");
 	}
 
