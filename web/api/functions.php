@@ -324,7 +324,9 @@
 
 		clearFile($secret);
 
-		if (strlen($data) > 10e6) { // arbitrary limit to prevent resource exhaustion by extra URL checking we do
+		// - arbitrary limit to prevent resource exhaustion by extra URL checking we do
+		// - The 'file' protocol, I'd love to support if any browsers did. They don't prompt to execute the redirect or something, nor do they show what it refused to redirect you to; no, they just break the page completely (you'd need to know that you can get your data using the dro.pm/o/view option), so this is entirely useless to users and we need to fix that browser limitation. (Ironically, some browsers suggest to "contact the website owner to fix this problem")
+		if (strlen($data) > 10e6 || substr($data, 0, 5) == 'file:') {
 			$validurl = false;
 		}
 		else {
