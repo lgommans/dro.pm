@@ -43,10 +43,11 @@ if ($status !== false) {
 	}
 	else if ($type == 3) {
 		$fpath = $data[0];
+		$fsize = filesize($fpath);
 		$original_fname = $data[1];
 		$escaped_original_fname = str_replace('"', '\\"', str_replace('\\', '\\\\', $original_fname));
 		$ext = strtolower(pathinfo($original_fname, PATHINFO_EXTENSION));
-		if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'gif'])) {
+		if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'gif']) && ! isset($_GET['download'])) {
 			// TODO SVG support with denied scripting
 			header('Content-type: image/' . $ext);
 		}
@@ -73,10 +74,18 @@ if ($status !== false) {
 			header('Content-type: text/plain');
 		}
 		else {
-			header('Content-type: application/octet-stream');
-			header('Content-disposition: attachment; filename="' . $escaped_original_fname . '"');
+			if (isset($_GET['preview'])) {
+				header('Content-type: text/plain');
+				print("This link would be a download but the URL specified that you wanted to /view or /preview it only.\n");
+				print('File size: ' . number_format($fsize, $decimals=0, $decimal_separator='.', $thousand_separator="'") . " bytes\n");
+				print("File name: $original_fname");
+				exit;
+			}
+			else {
+				header('Content-type: application/octet-stream');
+				header('Content-disposition: attachment; filename="' . $escaped_original_fname . '"');
+			}
 		}
-		$fsize = filesize($fpath);
 		header('Content-Length: ' . $fsize);
 		flush();
 
@@ -108,7 +117,7 @@ if ($status !== false) {
 </style>
 <strong>This link exists but is empty.</strong> Perhaps the sender is still uploading the file.<br>
 <br>
-This page automatically loads when it becomes available.<br>
+This page automatically loads when content becomes available.<br>
 <br>
 <span id='lastcheck'></span>
 <noscript><meta http-equiv=refresh content=4></noscript>

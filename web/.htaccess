@@ -5,4 +5,5 @@ RewriteRule ^$ frontpage.htm [END]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^([a-z0-9A-Z]{1,250})(\.([a-zA-Z0-9.]{0,10}))?/?$ gotoUrl.php?shortcode=$1&ext=$3 [END]
 RewriteRule ^([a-z0-9A-Z]{1,250})(\.([a-zA-Z0-9.]{0,10}))?/(preview|view)$ gotoUrl.php?shortcode=$1&ext=$3&preview [END]
+RewriteRule ^([a-z0-9A-Z]{1,250})(\.([a-zA-Z0-9.]{0,10}))?/(download|dl|d)$ gotoUrl.php?shortcode=$1&ext=$3&download [END]
 
