@@ -1,4 +1,5 @@
 <?php 
+	// TODO there seems to be encoding applied by firefox on file upload, like %22 for quotes maybe. Should test with more browsers and decode that, especially if % is escaped as %25 by all.
 	require('api/dbconn.php');
 	require('api/functions.php');
 
