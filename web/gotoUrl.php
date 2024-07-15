@@ -108,6 +108,11 @@ if ($status !== false) {
 	}
 }
 
+$basedir = './';
+if (isset($_GET['preview']) || isset($_GET['download'])){
+	$basedir = '../';
+}
+
 ?>
 <style>
 	body {
@@ -126,8 +131,8 @@ This page automatically loads when content becomes available.<br>
 	t = 350;
 	
 	function checkForUpdate() {
-		document.getElementById('lastcheck').innerHTML += " <img src='res/img/loading.gif' alt='loading animation' title='Loading...'>";
-		aGET('api/v1/check/<?php echo htmlspecialchars($_GET['shortcode'], ENT_COMPAT | ENT_HTML401 | ENT_QUOTES, 'UTF-8'); ?>', function(data) {
+		document.getElementById('lastcheck').innerHTML += " <img src='<?php print($basedir); ?>res/img/loading.gif' alt='loading animation' title='Loading...'>";
+		aGET('<?php print($basedir); ?>api/v1/check/<?php print(htmlspecialchars($_GET['shortcode'], ENT_COMPAT | ENT_HTML401 | ENT_QUOTES, 'UTF-8')); ?>', function(data) {
 			if (data == '1') {
 				document.querySelector('body').innerHTML = 'Contents detected, page is being reloaded. If you still see this message, a download should probably have appeared.';
 				location.reload();
