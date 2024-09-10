@@ -18,7 +18,7 @@ if ($status !== false) {
 		print('This link does not exist (anymore). Perhaps you would like to <a href="./">shorten your own?</a>');
 		exit;
 	}
-    else if ($type == 1) {
+	else if ($type == 1) {
 		if ($expireAfterDownload == "1") {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
 		}
@@ -48,6 +48,11 @@ if ($status !== false) {
 		$escaped_original_fname = str_replace('"', '\\"', str_replace('\\', '\\\\', $original_fname));
 		$ext = strtolower(pathinfo($original_fname, PATHINFO_EXTENSION));
 		if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'gif']) && ! isset($_GET['download'])) {
+			// always also have the disposition header so that
+			//  - if the browser forces a download after all (can't render, say, one of the video formats), it'll use the original filename and extension (tested in Firefox)
+			//  - when the user chooses to save the file (e.g.: right click, save image as), it'll use the original filename as suggestion (tested in Firefox)
+			header('Content-disposition: inline; filename="' . $escaped_original_fname . '"');
+
 			// TODO SVG support with denied scripting
 			header('Content-type: image/' . $ext);
 		}
@@ -59,17 +64,24 @@ if ($status !== false) {
 			header('Content-type: application/' . $ext);
 		}
 		else if (isset($_GET['preview']) && in_array($ext, ['csv', 'css', 'xml'])) {
+			header('Content-disposition: inline; filename="' . $escaped_original_fname . '"');
 			header('Content-type: text/' . $ext);
 		}
 		else if (isset($_GET['preview']) && in_array($ext, ['mp4', 'mkv', 'avi', 'webm', 'ogv', 'mov'])) {
+			if ($ext == 'mkv') { // TODO doesn't seem to work, is the MIME wrong or do no browsers (intend to) implement it?
+				$ext = 'x-matroska';
+			}
+			header('Content-disposition: inline; filename="' . $escaped_original_fname . '"');
 			header('Content-type: video/' . $ext);
 		}
 		else if (isset($_GET['preview']) && in_array($ext, ['mp3', 'ogg', 'wav', 'aac', 'opus'])) {
+			header('Content-disposition: inline; filename="' . $escaped_original_fname . '"');
 			header('Content-type: audio/' . $ext);
 		}
 		// can probably incorporate more from https://www.file-extensions.org/filetype/extension/name/text-files
 		// or should we just detect if it consists of valid ascii/utf-8/utf-16 and, if so, set it to type=text encoding=detected?
 		else if (isset($_GET['preview']) && in_array($ext, ['html', 'htm', 'html5', 'txt', 'log', 'nfo', 'asc', 'text', 'srt', 'sub', 'm3u', 'm3u8', 'tsv', 'cnf', 'conf', 'cfg', 'vim', 'vimrc', 'bashrc', 'sh', 'bash', 'ps1', 'bat', 'cmd', 'py', 'c', 'cpp', 'h', 'hpp', 'cs', 'java', 'lua', 'php', 'gml', 'coffee', 'pl', 'pas', 'go', 'rs', 'swift', 'rb', 'hs', 'sql', 'r', 'vbs', 'ts', 'kt', 'scala', 'dart', 'clj', 'nim', 'zig', 'mathml', 'md', 'markdown', 'ascii', 'reg', 'yml', 'yaml', 'dtd', 'xsd', 'smali', 'vcf', 'ics', 'icalendar', 'ical', 'ibf', 'sha1', 'sha256', 'shasum', 'sha256sum', 'sha152', 'sha512sum', 'md5'])) {
+			header('Content-disposition: inline; filename="' . $escaped_original_fname . '"');
 			// we don't want to execute html, so treat that as txt
 			header('Content-type: text/plain');
 		}
