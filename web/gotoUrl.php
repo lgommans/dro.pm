@@ -47,7 +47,7 @@ if ($status !== false) {
 		$original_fname = $data[1];
 		$escaped_original_fname = str_replace('"', '\\"', str_replace('\\', '\\\\', $original_fname));
 		$ext = strtolower(pathinfo($original_fname, PATHINFO_EXTENSION));
-		if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'gif']) && ! isset($_GET['download'])) {
+		if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'webp']) && ! isset($_GET['download'])) {
 			// always also have the disposition header so that
 			//  - if the browser forces a download after all (can't render, say, one of the video formats), it'll use the original filename and extension (tested in Firefox)
 			//  - when the user chooses to save the file (e.g.: right click, save image as), it'll use the original filename as suggestion (tested in Firefox)
