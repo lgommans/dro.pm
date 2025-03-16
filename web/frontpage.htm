@@ -296,37 +296,52 @@ See https://dro.pm/shell.txt for more information.
 					return;
 				}
 
-				var items = pasteEvent.clipboardData.items;
+				clearError();
 
-				if (pasteEvent.clipboardData.items[0].kind == 'string') {
-					if (document.activeElement != $("toshorten")) {
-						toshortenprevval = $("toshorten").value;
-						var fml = pasteEvent.clipboardData.getData("text");
-						setTimeout(function() { // fix for MSIEdge, it pastes it twice behind each other otherwise
-							$("toshorten").value = fml;
-						}, 1);
-						$("toshorten").focus(); // Such that ctrl+z works if they next press it
-					}
-					return;
-				}
-
-				if (pasteEvent.clipboardData.files.length === 0) {
-					return errorHandler("No text or image detected on the clipboard. This appears to happen for large images. Try the file upload feature, that goes up to gigabytes!");
-				}
+				let data = pasteEvent.clipboardData;
+				let items = data.items;
 
 				if (items.length > 1) {
-					errorHandler("Only one clipboard item supported at the moment; using first one.");
+					errorHandler("There are multiple items on your clipboard, but only one concurrent item is supported. Trying to use the first one...");
 				}
 
-				if (pasteEvent.clipboardData.files[0].type.indexOf("image/") === 0) {
-					showImage(items[0].getAsFile());
+				if (data.files && data.files.length > 0) {
+					let file = items[0].getAsFile();
+					if (file === null) {
+						errorHandler('There was a file or image on your clipboard, but your browser cannot seem to retrieve it (getAsFile() resulted in null)');
+						// don't return so we can still try the text paste if there is any
+					}
+					else {
+						if (data.files[0].type.indexOf("image/") === 0) {
+							showImage(file);
+						}
+
+						// credits to https://stackoverflow.com/a/47172409 for the method of converting the paste event to a <input type=file> using DataTransfer
+						let dt = new DataTransfer();
+						dt.items.add(file);
+						$('f').files = dt.files;
+						$('f').onchange(); // the onchange doesn't trigger on its own despite, y'know, it having changed
+
+						return;
+					}
 				}
 
-				// credits to https://stackoverflow.com/a/47172409 for the method of converting the paste event to a <input type=file> using DataTransfer
-				var dt = new DataTransfer();
-				dt.items.add(items[0].getAsFile());
-				$('f').files = dt.files;
-				$('f').onchange(); // the onchange doesn't trigger on its own despite, y'know, it having changed
+				for (let i in items) {
+					if (items[i].kind == 'string') {
+						if (document.activeElement != $("toshorten")) {
+							toshortenprevval = $("toshorten").value;
+							var fml = data.getData("text");
+							setTimeout(function() { // fix for MSIEdge, it pastes it twice behind each other otherwise
+								$("toshorten").value = fml;
+							}, 1);
+							$("toshorten").focus(); // Such that ctrl+z works if they next press it
+						}
+
+						return;
+					}
+				}
+
+				return errorHandler("No text or image detected on the clipboard. This appears to happen for large images. Try the file upload feature! It can handle several gigabytes");
 			}, false);
 
 			$("customLink").onpaste = function(ev) {
@@ -552,7 +567,14 @@ See https://dro.pm/shell.txt for more information.
 
 					req.send(formData);
 				}
-				$("fileform").reset();  // Allow selecting another file
+
+				// A user had the problem that selecting another file was not detected as change, and this fixed it for them (see commit d005be3 or GitHub issue 14).
+				// Now I am having the problem that you can't see what is being uploaded / what you selected.
+				// Not all browsers have filename-in-Javascript support so we can't simply display it ourselves reliably...
+				// Compromise: clear it after a short time.
+				fileFormResetTimeout = setTimeout(function() {
+					$("fileform").reset();  // Allow selecting another file
+				}, 2500);
 
 				showUrl();
 			}
