@@ -74,7 +74,7 @@ if ($status !== false) {
 			header('Content-type: text/plain');
 			print("This link is a download but you requested /meta information.\n");
 			print('File size: ' . number_format($fsize, $decimals=0, $decimal_separator='.', $thousand_separator="'") . " bytes\n");
-			print("File name: $original_fname");
+			print("File name: $original_fname\n");
 
 			if ($expireAfterDownload == '1') {
 				print('This link self-destructed because you viewed it.');
@@ -187,7 +187,7 @@ This page automatically loads when content becomes available.<br>
 	t = 350;
 
 	function checkForUpdate() {
-		document.getElementById('lastcheck').innerHTML += " <img src='<?php print($basedir); ?>res/img/loading.gif' alt='loading animation' title='Loading...'>";
+		document.getElementById('lastcheck').innerHTML += " <img src='<?php print($basedir); ?>res/img/loading.gif' alt='Checking now...' title='Checking now...'>";
 		aGET('<?php print($basedir); ?>api/v1/check/<?php print(htmlspecialchars($_GET['shortcode'], ENT_COMPAT | ENT_HTML401 | ENT_QUOTES, 'UTF-8')); ?>', function(data) {
 			if (data == '1') {
 				document.querySelector('body').innerHTML = 'Contents detected, page is being reloaded. If you still see this message, a download should probably have appeared.';

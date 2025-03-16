@@ -35,7 +35,7 @@
 
 		$key = $db->query('SELECT `key` FROM `shorts` WHERE `secret` = "' . $db->escape_string($secret) . '"') or die('Database error 3984');
 		if ($key->num_rows != 1) {
-			die('?secret=' . htmlspecialchars($secret) . ' not found');
+			die('Your link seems to have expired (secret token not found)');
 		}
 		$key = $key->fetch_row()[0];
 	}
