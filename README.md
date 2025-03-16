@@ -42,16 +42,28 @@ wnat to monitor for / rate limit in the future.
 
 **License**
 
-GPLv3: see the `./LICENSE` file.
+GPLv3: see the [LICENSE](./LICENSE) file.
 
 **Security**
 
 Because users can create what looks like files on your domain, they can also do website verification
 and claim your site at third parties. To avoid this, you should identify which third parties are
 relevant to you and block illegitimate verification attempts. In my case, this was done by
-configuring the web server to block user agents containing 'site-verification' (case-insensitive).
+configuring the webserver to block user agents containing 'site-verification' (case-insensitive):
 
-You might also want to create a `favicon.ico` and `robots.txt`.
+```apache2
+<VirtualHost *:80>
+    ServerName dro.pm
+    [...]
+    RewriteEngine on
+    RewriteCond %{HTTP_USER_AGENT}  ^.*[sS]ite-[vV]erification.*$
+    RewriteRule . /site-verification-blocked.txt [L]
+</VirtualHost>
+```
+
+You might also want to create `favicon.ico` and `robots.txt`, because the `.htaccess` configuration
+will cause the webserver to load files directly when they exist on disk (without looking up in the
+database if someone created a link with that name).
 
 **To do**
 
@@ -70,7 +82,7 @@ store/load option, where the collective page can be downloaded. And, after downl
 load it back into a new link later, for example for the next session.
 
 An API would also be neat. There sort-of already is one, but I'd like to formalize it and to make it
-better.
+better. At minimum, it should be documented.
 
 The Android app does not allow sharing text or URLs, and there should be a 'remove' button. It could
 have an overview of currently valid links and allow you to remove those. And it does not allow custom
