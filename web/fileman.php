@@ -8,6 +8,12 @@
 		die("No file given?");
 	}
 
+	$original_filename = $_FILES['f']['name'];
+	if (strpos($original_filename, '/') !== false || strpos($original_filename, "\\") !== false || empty($original_filename)) {
+		header('HTTP/1.1 400 Bad Request');
+		die('Forward and backward slashes are not allowed in the filename, and it must not be empty.');
+	}
+
 	$retval = "1";
 
 	$expireAfterDownload = '0';
@@ -36,12 +42,13 @@
 
 	$success = move_uploaded_file($_FILES['f']['tmp_name'], 'uploads/' . $key);
 	if (!$success) {
-		die('Error moving file.<script>alert("Error 500 uploading file.");</script>');
+		die('Error moving file. It may be that the server\'s storage space is full, or some other cause I am not aware of. Let me know if you run into this!');
 	}
 
-	$data = ['original_filename' => $_FILES['f']['name'], 'filename' => $key];
+	$data = ['original_filename' => $original_filename, 'filename' => $key];
 	$data = $db->escape_string(json_encode($data));
-	$db->query('UPDATE `shorts` SET `expires` = ' . (time() + (12 * 3600)) . ', `type` = 2, `value` = "' . $data . '", expireAfterDownload = ' . $expireAfterDownload
+	// TODO put this magic 18*3600 in a file somewhere so that it can also be shared/sync'd with api/functions.php
+	$db->query('UPDATE `shorts` SET `expires` = ' . (time() + (18 * 3600)) . ', `type` = 2, `value` = "' . $data . '", expireAfterDownload = ' . $expireAfterDownload
 		. ' WHERE `secret` = "' . $db->escape_string($secret) . '"') or die('Database error 29348');
 
 	die($retval);
