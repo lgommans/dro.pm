@@ -81,11 +81,19 @@ See https://dro.pm/shell.txt for more information.
 			var defaultActionText = ["Press Ctrl + V<span style='font-size: 15pt'><br>to paste a link, text, or image</span>",
 				"2. Share text, a link or a file"];
 			var protips = [
+				// some are duplicated to show them more often
 				"you can overwrite your existing link by<br>editing the input field or uploading a new file.",
 				"know where a URL goes to before visiting:<br>dro.pm/o/view shows the link destination",
+				"dro.pm/o/meta shows meta information,<br>never previewing a file or redirecting you",
+				"dro.pm/o/meta shows meta information,<br>never previewing a file or redirecting you",
 				"git doesn't clone from redirects. A fix:<br><tt>curl https://dro.pm/o/view | xargs git clone</tt>",
+				"to see where a link goes to, use /view.<br>Example: dro.pm/o/view",
+				"to see where a link goes to, use /view.<br>Example: dro.pm/o/view",
 				"to avoid a download, use /view.<br>dro.pm/o/view &ndash; works for pdf, mp3, etc.",
-				"to force a download, like for images,<br>add <tt>/download</tt> to your link",
+				"add /view to view files without downloading.<br>dro.pm/o/view &ndash; works for pdf, mp3, etc.",
+				"add /view to view files without downloading.<br>dro.pm/o/view &ndash; works for pdf, mp3, etc.",
+				"to force a download, e.g. for images,<br>add <tt>/download</tt> to your link",
+				"to force a download, e.g. for images,<br>add <tt>/download</tt> to your link",
 				"want/need a file extension? No problem!<br>Extensions are ignored: dro.pm/o.png",
 				"files can be up to 2 GB (larger on request).<br>You might also like <a style='opacity: 0.7' href='https://wormhole.app' target='_blank' rel=noopener>wormhole.app</a> for streaming large files",
 				"upload files from a shell,<br>see:&nbsp;&nbsp;<tt>curl https://dro.pm | head</tt>",
@@ -98,7 +106,7 @@ See https://dro.pm/shell.txt for more information.
 				"make backups. If your accounts<br>are hacked, would you lose everything?<br>Download that spotify song list as .txt!",
 				"ctrl+shift+t reopens the last-closed tab",
 				// Hello there, protip reader!  Wanna have a real secret protip?  dro.pm is open source :D
-				// You can add features and I will host them for you. https://github.com/lgommans/dro.pm
+				// You can add features and I will host them for you! https://github.com/lgommans/dro.pm
 			];
 
 			function $(id){ return document.getElementById(id); }

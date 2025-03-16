@@ -19,12 +19,22 @@ if ($status !== false) {
 		exit;
 	}
 	else if ($type == 1) {
-		if ($expireAfterDownload == "1") {
+		if ($expireAfterDownload == '1') {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
 		}
-		if (isset($_GET['preview'])) {
+		if (isset($_GET['meta'])) {
 			header('Content-Type: text/plain');
-			echo $data;
+			if ($expireAfterDownload == '1') {
+				print("This link self-destructed because you viewed it.\n");
+				print("It would have redirected to:\n" . $data);
+			}
+			else {
+				print("This link redirects to:\n" . $data);
+			}
+		}
+		else if (isset($_GET['preview'])) {
+			header('Content-Type: text/plain');
+			print($data);
 		}
 		else {
 			header('HTTP/1.1 307 Temporary Redirect');
@@ -33,11 +43,24 @@ if ($status !== false) {
 		exit;
 	}
 	else if ($type == 2) {
-		echo $data;
-
 		if ($expireAfterDownload == "1") {
 			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
 		}
+
+		if (isset($_GET['meta'])) {
+			$len = strlen($data);
+			header('Content-Type: text/plain');
+			if ($expireAfterDownload == '1') {
+				print("This link self-destructed because you viewed it.\n");
+				print("It contained $len bytes of text data:\n" . $data);
+			}
+			else {
+				print("This link contains $len bytes of text data:\n" . $data);
+			}
+			exit;
+		}
+
+		print($data);
 
 		exit;
 	}
@@ -46,6 +69,21 @@ if ($status !== false) {
 		$fsize = filesize($fpath);
 		$original_fname = $data[1];
 		$escaped_original_fname = str_replace('"', '\\"', str_replace('\\', '\\\\', $original_fname));
+
+		if (isset($_GET['meta'])) {
+			header('Content-type: text/plain');
+			print("This link is a download but you requested /meta information.\n");
+			print('File size: ' . number_format($fsize, $decimals=0, $decimal_separator='.', $thousand_separator="'") . " bytes\n");
+			print("File name: $original_fname");
+
+			if ($expireAfterDownload == "1") {
+				print('This link self-destructed because you viewed it.');
+				api_set(getSecretByCode($_GET['shortcode']), 'This link has already been downloaded.', false, true);
+			}
+
+			exit;
+		}
+
 		$ext = strtolower(pathinfo($original_fname, PATHINFO_EXTENSION));
 		if (in_array($ext, ['jpg', 'jpeg', 'png', 'bmp', 'gif', 'webp']) && ! isset($_GET['download'])) {
 			// always also have the disposition header so that
@@ -90,7 +128,13 @@ if ($status !== false) {
 				header('Content-type: text/plain');
 				print("This link would be a download but the URL specified that you wanted to /view or /preview it only.\n");
 				print('File size: ' . number_format($fsize, $decimals=0, $decimal_separator='.', $thousand_separator="'") . " bytes\n");
-				print("File name: $original_fname");
+				print("File name: $original_fname\n");
+
+				if ($expireAfterDownload == '1') {
+					print('This link self-destructed because you viewed it.');
+					api_set(getSecretByCode($_GET['shortcode']), 'This link has already been downloaded.', false, true);
+				}
+
 				exit;
 			}
 			else {
@@ -105,7 +149,7 @@ if ($status !== false) {
 		set_time_limit(0);
 		$fid = fopen($fpath, 'r');
 		while ($data = fread($fid, 1024 * 1024)) {
-			echo $data;
+			print($data);
 		}
 		fclose($fid);
 
