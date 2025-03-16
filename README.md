@@ -72,10 +72,6 @@ load it back into a new link later, for example for the next session.
 An API would also be neat. There sort-of already is one, but I'd like to formalize it and to make it
 better.
 
-The client (that is, the website) currently does not warn you when your secret token has expired,
-i.e. when you can no longer manage your link. This happens when your link expired (for example
-because it was empty and you left the tab open for a few hours).
-
 The Android app does not allow sharing text or URLs, and there should be a 'remove' button. It could
 have an overview of currently valid links and allow you to remove those. And it does not allow custom
 links yet.
@@ -92,7 +88,7 @@ files, also be able to use the traditional method. Another UI challenge: how to 
 option (it should probably be the default) without making everything more difficult when you do not
 want to have to answer ten questions in order to share something?
 
-Feel free to work on any of this. Things like expanding Android app or checking whether a token is still
-valid are straightforward, but before you commit large chunks of your time to something like UI problems,
+Feel free to work on any of this. Things like expanding Android app are straightforward, but before
+you commit a large chunk of your time to something like UI problems,
 be sure to bounce ideas off of me first! I want to keep the product useful for everyone and myself,
 and that means applying quality control.
