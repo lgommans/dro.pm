@@ -20,7 +20,7 @@ if ($status !== false) {
 	}
 	else if ($type == 1) {
 		if ($expireAfterDownload == '1') {
-			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
+			api_set(getSecretByCode($_GET['shortcode']), 'This link has already been downloaded.', false, true);
 		}
 		if (isset($_GET['meta'])) {
 			header('Content-Type: text/plain');
@@ -43,8 +43,8 @@ if ($status !== false) {
 		exit;
 	}
 	else if ($type == 2) {
-		if ($expireAfterDownload == "1") {
-			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
+		if ($expireAfterDownload == '1') {
+			api_set(getSecretByCode($_GET['shortcode']), 'This link has already been downloaded.', false, true);
 		}
 
 		if (isset($_GET['meta'])) {
@@ -76,7 +76,7 @@ if ($status !== false) {
 			print('File size: ' . number_format($fsize, $decimals=0, $decimal_separator='.', $thousand_separator="'") . " bytes\n");
 			print("File name: $original_fname");
 
-			if ($expireAfterDownload == "1") {
+			if ($expireAfterDownload == '1') {
 				print('This link self-destructed because you viewed it.');
 				api_set(getSecretByCode($_GET['shortcode']), 'This link has already been downloaded.', false, true);
 			}
@@ -153,8 +153,8 @@ if ($status !== false) {
 		}
 		fclose($fid);
 
-		if ($expireAfterDownload == "1") {
-			api_set(getSecretByCode($_GET['shortcode']), "This link has already been downloaded.", false, true);
+		if ($expireAfterDownload == '1') {
+			api_set(getSecretByCode($_GET['shortcode']), 'This link has already been downloaded.', false, true);
 		}
 
 		exit;
@@ -185,7 +185,7 @@ This page automatically loads when content becomes available.<br>
 
 <script>
 	t = 350;
-	
+
 	function checkForUpdate() {
 		document.getElementById('lastcheck').innerHTML += " <img src='<?php print($basedir); ?>res/img/loading.gif' alt='loading animation' title='Loading...'>";
 		aGET('<?php print($basedir); ?>api/v1/check/<?php print(htmlspecialchars($_GET['shortcode'], ENT_COMPAT | ENT_HTML401 | ENT_QUOTES, 'UTF-8')); ?>', function(data) {
@@ -199,7 +199,7 @@ This page automatically loads when content becomes available.<br>
 			}
 		});
 	}
-	
+
 	function aGET(uri, callback) {
 		var req = new XMLHttpRequest();
 		req.open("GET", uri, true);
@@ -209,7 +209,7 @@ This page automatically loads when content becomes available.<br>
 				callback(req.responseText);
 		}
 	}
-	
+
 	checkForUpdate();
 </script>
 
@@ -259,7 +259,7 @@ theMonths=new Array("JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AU
 date=new Date();
 day=date.getDate();
 year=date.getYear();
-if (year < 2000) year=year+1900; 
+if (year < 2000) year=year+1900;
 tmpdate=" "+theDays[date.getDay()]+" "+day+" "+theMonths[date.getMonth()]+" "+year;
 D=tmpdate.split("");
 N='3 4 5 6 7 8 9 10 11 12 1 2';
@@ -287,9 +287,9 @@ dx=new Array();
 zy=new Array();
 zx=new Array();
 tmps=new Array();
-tmpm=new Array(); 
+tmpm=new Array();
 tmph=new Array();
-tmpf=new Array(); 
+tmpf=new Array();
 tmpd=new Array();
 var sum=parseInt(D.length+F+H.length+M.length+S.length)+1;
 for (i=0; i < sum; i++){
@@ -307,7 +307,7 @@ tmpd[i]=document.getElementById("_date"+i).style;
 }
 for (i=0; i < F; i++){
 document.write('<div id="_face'+i+'" class="css2" style="color:'+fCol+'">'+N[i]+'<\/div>');
-tmpf[i]=document.getElementById("_face"+i).style; 
+tmpf[i]=document.getElementById("_face"+i).style;
 }
 for (i=0; i < H.length; i++){
 document.write('<div id="_hours'+i+'" class="css1" style="color:'+hCol+'">'+H[i]+'<\/div>');
@@ -315,19 +315,19 @@ tmph[i]=document.getElementById("_hours"+i).style;
 }
 for (i=0; i < M.length; i++){
 document.write('<div id="_minutes'+i+'" class="css1" style="color:'+mCol+'">'+M[i]+'<\/div>');
-tmpm[i]=document.getElementById("_minutes"+i).style; 
+tmpm[i]=document.getElementById("_minutes"+i).style;
 }
 for (i=0; i < S.length; i++){
 document.write('<div id="_seconds'+i+'" class="css1" style="color:'+sCol+'">'+S[i]+'<\/div>');
-tmps[i]=document.getElementById("_seconds"+i).style;         
+tmps[i]=document.getElementById("_seconds"+i).style;
 }
 
 function onoff(){
-if (vis){ 
+if (vis){
  vis=false;
  document.getElementById("control").value="Clock On";
  }
-else{ 
+else{
  vis=true;
  document.getElementById("control").value="Clock Off";
  Delay();
@@ -336,15 +336,15 @@ kill();
 }
 
 function kill(){
-if (vis) 
+if (vis)
  document.onmousemove=mouse;
-else 
+else
  document.onmousemove=null;
-} 
+}
 
 function mouse(e){
 var msy = (!ieType)?window.pageYOffset:0;
-if (!e) e = window.event;    
+if (!e) e = window.event;
  if (typeof e.pageY == 'number'){
   mouseY = e.pageY + ofst - msy;
   mouseX = e.pageX + ofst;
@@ -366,7 +366,7 @@ document.onmousemove=mouse;
 document.ontouchmove=mouse2;
 
 function winDims(){
-winH=(ieType)?ieRef.clientHeight:window.innerHeight; 
+winH=(ieType)?ieRef.clientHeight:window.innerHeight;
 winW=(ieType)?ieRef.clientWidth:window.innerWidth;
 }
 winDims();
