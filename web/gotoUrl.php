@@ -37,11 +37,11 @@ if ($status !== false) {
 		if (isset($_GET['meta'])) {
 			header('Content-Type: text/plain');
 			if ($expireAfterDownload == '1') {
-				print("This link self-destructed because you viewed it.\n");
+				print("This link self-destructed because you viewed it. It would have been valid until $validUntil.\n");
 				print("It would have redirected to:\n" . $data);
 			}
 			else {
-				print("This link redirects to:\n" . $data);
+				print("This link is valid until $validUntil and redirects to:\n" . $data);
 			}
 		}
 		else if (isset($_GET['preview'])) {
@@ -84,7 +84,7 @@ if ($status !== false) {
 
 		if (isset($_GET['meta'])) {
 			header('Content-type: text/plain');
-			print("This link is a download but you requested /meta information.\n");
+			print("This link is a download, valid until $validUntil, but you requested /meta information.\n");
 			print('File size: ' . number_format($fsize, $decimals=0, $decimal_separator='.', $thousand_separator="'") . " bytes\n");
 			print("File name: $original_fname\n");
 
