@@ -167,21 +167,26 @@
 	function tryGet($shortcode, $checkExists = false) {
 		global $db, $uploaddir;
 
-		$result = $db->query('SELECT `type`, `value`, `expireAfterDownload` FROM shorts WHERE `key` = "' . $db->escape_string($shortcode) . '" AND `value` != "" AND `expires` > ' . time()) or die('Database error 53418');
+		$result = $db->query('SELECT `type`, `value`, `expireAfterDownload`, `expires` FROM shorts WHERE `key` = "' . $db->escape_string($shortcode) . '" AND `value` != "" AND `expires` > ' . time()) or die('Database error 53418');
 		if ($result->num_rows != 1) {
+			$expires = null;
 			if ($checkExists) {
-				$result = $db->query('SELECT `value`, `expireAfterDownload` FROM shorts WHERE `key` = "' . $db->escape_string($shortcode) . '" AND `expires` > ' . time()) or die('Database error 7150183');
+				$result = $db->query('SELECT `value`, `expireAfterDownload`, `expires` FROM shorts WHERE `key` = "' . $db->escape_string($shortcode) . '" AND `expires` > ' . time()) or die('Database error 7150183');
 				if ($result->num_rows != 1) {
 					return array('2', 0);
 				}
+				else {
+					$result = $result->fetch_row();
+					$expires = $result[2];
+				}
 			}
-			return array(false, null, null, false);
+			return array(false, null, null, false, $expires);
 		}
 
 		$result = $result->fetch_row();
 		switch ($result[0]) {
 			case 0:
-				return array(true, 1, $result[1], $result[2]);
+				return array(true, 1, $result[1], $result[2], $result[3]);
 
 			case 1:
 				$data = $db->query('SELECT `data` FROM pastes WHERE `secret` = "' . $result[1] . '"') or die('Database error 192483');
@@ -192,7 +197,7 @@
 					$data = $data->fetch_row();
 				}
 				header('Content-Type: text/plain; charset=utf-8');
-				return array(true, 2, $data[0], $result[2]);
+				return array(true, 2, $data[0], $result[2], $result[3]);
 
 			case 2:
 				if (strpos(substr(getcwd(), strlen(getcwd()) - 4), 'api') === false) {
@@ -203,10 +208,10 @@
 				}
 				$metadata = json_decode($result[1], true);
 
-				return array(true, 3, array($dir . $metadata['filename'], $metadata['original_filename']), $result[2]);
+				return array(true, 3, array($dir . $metadata['filename'], $metadata['original_filename']), $result[2], $result[3]);
 
 			default:
-				return array('2', 2, 'There is something funny about this link of yours', $result[2]);
+				return array('2', 2, 'There is something funny about this link of yours', $result[2], $result[3]);
 		}
 	}
 

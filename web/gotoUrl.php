@@ -11,7 +11,19 @@ if ($_SERVER['HTTP_USER_AGENT'] === 'TelegramBot (like TwitterBot)') {
 	exit;
 }
 
-list($status, $type, $data, $expireAfterDownload) = tryGet($_GET['shortcode'], true);
+list($status, $type, $data, $expireAfterDownload, $expires) = tryGet($_GET['shortcode'], true);
+if ($expires !== null) {
+	if ($expires - time() < 120) {
+		$another = ($expires - time()) . ' seconds';
+	}
+	else if ($expires - time() < 3800) {
+		$another = round(($expires - time()) / 60, 1) . ' minutes';
+	}
+	else {
+		$another = round(($expires - time()) / 3600, 1) . ' hours';
+	}
+	$validUntil = str_replace('T', ' ', date('c', $expires)) . " (unix timestamp: $expires, which is in $another)";
+}
 if ($status !== false) {
 	if ($type == 0) {
 		header('HTTP/1.1 404 Not Found');
@@ -51,11 +63,11 @@ if ($status !== false) {
 			$len = strlen($data);
 			header('Content-Type: text/plain');
 			if ($expireAfterDownload == '1') {
-				print("This link self-destructed because you viewed it.\n");
+				print("This link self-destructed because you viewed it. It would have been valid until $validUntil\n");
 				print("It contained $len bytes of text data:\n" . $data);
 			}
 			else {
-				print("This link contains $len bytes of text data:\n" . $data);
+				print("This link is valid until $validUntil and contains $len bytes of text data:\n" . $data);
 			}
 			exit;
 		}
@@ -161,6 +173,13 @@ if ($status !== false) {
 	}
 	else {
 		die('Error 194394');
+	}
+}
+else {
+	if (isset($_GET['meta'])) {
+		header('Content-type: text/plain');
+		print("This link is empty and reserved until $validUntil.\n");
+		exit;
 	}
 }
 

@@ -65,7 +65,7 @@
 	function check() {
 		$i = 0;
 		do {
-			list($status, $type, $data) = tryGet($_GET['val'], true);
+			list($status, $type, $data, $expires) = tryGet($_GET['val'], true);
 			if ($status === true) {
 				die('1');
 			}
