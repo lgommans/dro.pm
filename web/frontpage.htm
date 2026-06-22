@@ -70,11 +70,25 @@ See https://dro.pm/shell.txt for more information.
 		</div>
 		<div style="margin-top: 40px; color: #fff;" id=info>
 			<center>
-				<span style="opacity: 0.8" id=protipspan></span>
-				<a href="javascript:info()">More info</a> | <a href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a><br>
+				<!--(If you run into malware warnings for this website, please report the false classification to whatever blocklist you are using. Of course, like with any other website or email, don't open <i>files</i> if you don't trust the sender, but the website itself is safe to use.)<br><br>-->
+				<span style="opacity: 0.8" id=protipspan>
+				<!--Note: you may see a warning page when opening dro.pm but it's obviously wrong.
+				The website is as malicious as dropbox or github: use normal caution when downloading files that other people uploaded.<br><br>
+
+				I have not found where/how to correct this. If you get a malware warning for the whole site (not an individual file, as that may legitimately be malicious),
+				maybe you can find what database this is coming from and tell me or them about the mistaken entry.<br><br>--></span>
+
+				<a href="javascript:info()">More info</a> | <a href="https://github.com/lgommans/dro.pm/issues">Report a Bug</a> | <a href="https://dro.pm/submitreport.html">Report content</a><br>
 				<span style="opacity: 0.7">By using this site, you disagree to the use of cookies. <a id=cookiesok href='javascript:$("cookiesok").outerHTML = "<br>Privacy provides you the best experience, not tracking.";void(0);'>Ok</a></span>
 			</center>
 		</div>
+		<script>
+			/* Show a useful-ish error to older browsers (rather than an infinite loading message), like if they don't support the 'let' keyword */
+			onerror = function(ev) {
+				document.getElementById('error').innerHTML = 'JavaScript error. Please <a href="https://github.com/lgommans/dro.pm/issues">report this here</a>!<br><i>' + ev.toString() + '</i>';
+				document.getElementById('error').style.display = 'block';
+			};
+		</script>
 		<script>
 			var msg_loadingLink = "Loading your link...";
 			var pasteimg_sizeratio = 0.6;
@@ -82,6 +96,7 @@ See https://dro.pm/shell.txt for more information.
 				"2. Share text, a link or a file"];
 			var protips = [
 				// some are duplicated to show them more often
+				"use <tt>neverssl.dro.pm/yourlink</tt><br>if ever you need a plain HTTP download",
 				"you can overwrite your existing link by<br>editing the input field or uploading a new file.",
 				"know where a URL goes to before visiting:<br>dro.pm/o/view shows the link destination",
 				"dro.pm/o/meta shows meta information,<br>never previewing a file or redirecting you",
@@ -95,15 +110,18 @@ See https://dro.pm/shell.txt for more information.
 				"add /view to view files without downloading.<br>dro.pm/o/view &ndash; works for pdf, mp3, etc.",
 				"to force a download, e.g. for images,<br>add <tt>/download</tt> to your link",
 				"to force a download, e.g. for images,<br>add <tt>/download</tt> to your link",
+				"only run software from trusted senders!",
+				"report any malicious content you are sent via dro.pm!",
 				"want/need a file extension? No problem!<br>Extensions are ignored: dro.pm/o.png",
 				"files can be up to 2 GB (larger on request).<br>You might also like <a style='opacity: 0.7' href='https://wormhole.app' target='_blank' rel=noopener>wormhole.app</a> for streaming large files",
 				"upload files from a shell,<br>see:&nbsp;&nbsp;<tt>curl https://dro.pm | head</tt>",
 				"dro.pm links work in your shell.<br>You can <tt>curl</tt> or <tt>wget</tt> texts or files.",
 				"add any extension to the link;<br><tt>wget dro.pm/a.jpg</tt> avoids needing <tt>-O</tt>",
 				"you can paste images from the clipboard,<br>thanks to a contribution from MagicLegend!",
-				"links have a delete button,<br>but remember: sharing is caring :)",
+				"links have a delete button,<br>but custom links are more private",
 				"<span style='font-variant: small-caps'>this site supports caps lock.<br>DRO.PM/O is the same as</span> dro.pm/o",
-				"dropm doesn't compress (jpegify) your images", //, <span style='font-size: 0.7em'>videos, <span style='font-size: 0.76em'>songs, <span style='font-size: 0.76em'>fanfic, <span style='font-size: 0.76em'>cars, <span style='font-size: 0.76em'>warez...</span></span></span></span></span>",
+				"dropm doesn't compress (jpegify) your images", //, <span style='font-size: 0.7em'>videos, <span style='font-size: 0.76em'>songs, <span style='font-size: 0.76em'>fanfic, <span style='font-size: 0.76em'>cars</span></span></span></span>",
+				"dropm preserves photo metadata<br>(though mobile OS file pickers might not)",
 				"make backups. If your accounts<br>are hacked, would you lose everything?<br>Download that spotify song list as .txt!",
 				"ctrl+shift+t reopens the last-closed tab",
 				// Hello there, protip reader!  Wanna have a real secret protip?  dro.pm is open source :D
@@ -137,6 +155,10 @@ See https://dro.pm/shell.txt for more information.
 			$("dropem").onclick = function() {
 				location.reload();
 			};
+
+			if (location.hostname == 'drop.pm') {
+				location = 'https://dro.pm/?p'; /* please use the main domain. The other is just for people typo'ing/misunderstanding the actual domain */
+			}
 
 			function shouldIncreaseToShortenHeight() {
 				return $("toshorten").clientWidth < $("toshorten").scrollWidth;
@@ -231,6 +253,7 @@ See https://dro.pm/shell.txt for more information.
 			$("customLink").onmouseup =
 			$("customLink").onchange = function() {
 				var r = $("customLink").value;
+				var rLower = r.toLowerCase();
 				if (r == customUrl) {
 					return; // Nothing changed.
 				}
@@ -238,20 +261,20 @@ See https://dro.pm/shell.txt for more information.
 				var red = function(t) { return "<span style='color:#f00'>" + t + "</span>"; }
 				var green = function(t) { return "<span style='color:#0f0'>" + t + "</span>"; }
 				var judgement = "";
-				if (secretsDB['customurls'][r] && !secretsDB['customurls'][r]['taken']) {
+				if (secretsDB['customurls'][rLower] && !secretsDB['customurls'][rLower]['taken']) {
 					customUrl = r;
-					secret = secretsDB['customurls'][r]['secret'];
+					secret = secretsDB['customurls'][rLower]['secret'];
 					setUrl(r);
 					judgement = green("Looks good!");
 				}
-				else if (secretsDB['customurls'][r] && secretsDB['customurls'][r]['taken']) {
+				else if (secretsDB['customurls'][rLower] && secretsDB['customurls'][rLower]['taken']) {
 					judgement = red("Already taken.");
 				}
 				else {
 					if (r.length === 0) {
 						// intentionally skipped
 					}
-					else if (r.length < 4) {
+					else if (r.length < 2) {
 						judgement = red("Too short");
 					}
 					else if (!/^[a-zA-Z0-9]*$/.test(r)) {
@@ -267,17 +290,17 @@ See https://dro.pm/shell.txt for more information.
 								customUrl = data[2];
 								secret = data[1];
 								setUrl(data[2]);
-								secretsDB['customurls'][data[2]] = {"taken": false, "secret": data[1]};
+								secretsDB['customurls'][customUrl.toLowerCase()] = {"taken": false, "secret": data[1]};
 								if (customUrl == $("customLink").value) {
 									$("customLinkValidation").innerHTML = green("Looks good!");
 								}
 							}
 							else {
-								if (secretsDB['customurls'][data[1]]) {
+								if (secretsDB['customurls'][data[1].toLowerCase()]) {
 									// We already have it, we apparently sent a duplicate request
 									return;
 								}
-								secretsDB['customurls'][data[1]] = {"taken": true};
+								secretsDB['customurls'][data[1].toLowerCase()] = {"taken": true};
 								secret = false;
 								$("customLinkValidation").innerHTML = red("Already taken.");
 							}
@@ -303,7 +326,8 @@ See https://dro.pm/shell.txt for more information.
 				let items = data.items;
 
 				if (items.length > 1) {
-					errorHandler("There are multiple items on your clipboard, but only one concurrent item is supported. Trying to use the first one...");
+					// 2026-06 This seems to happen a lot nowadays, especially on Windowses. I don't think this message ever helped me so far so just nvm.
+					//errorHandler("There are multiple items on your clipboard, but only one concurrent item is supported. Trying to use the first one...");
 				}
 
 				if (data.files && data.files.length > 0) {
@@ -392,9 +416,9 @@ See https://dro.pm/shell.txt for more information.
 					+ 'so you should capture evidence of illegal content.<br>'
 					+ '<br>'
 					+ 'You can also upload files from the command line, as simply as:<br><tt>user@localhost:~$ dropm example.mp3</tt><br>'
-					+ 'See <a href="https://pastebin.com/HUK0beKa">pastebin.com/HUK0beKa</a><br>'
+					+ 'See <a href="/shell.txt">dro.pm/shell.txt</a> or use the instructions in:<br><tt>$ curl https://dro.pm | head</tt><br>'
 					+ '<br>'
-					+ 'This site does not make use of cookies, fingerprinting, or similar techniques. Extorting you to consent to tracking for the "best experience" is a lie.<br>'
+					+ 'This site does not make use of cookies, fingerprinting, or other tracking. Extorting your consent to tracking for the "best experience" is a lie.<br>'
 					;
 			}
 
@@ -402,9 +426,9 @@ See https://dro.pm/shell.txt for more information.
 				if (!secret) return;
 
 				var html = '<span style="display:inline-block">' + url.replace('beta.','') + '</span>&nbsp;'
-					+ `<img src="res/img/exturl.png" style="cursor:pointer" height="25" onclick="window.open('//' + url + '');">&nbsp;`
-					+ `<img src="res/img/qr.png" style="cursor:pointer" onclick="showQR();">`
-					+ `<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();" id=deletebtn>delete</a>)</div>`;
+					+ '<img src="res/img/exturl.png" style="cursor:pointer" height="25" onclick="window.open(\'//\' + url + \'\');">&nbsp;'
+					+ '<img src="res/img/qr.png" style="cursor:pointer" onclick="showQR();">'
+					+ '<div class="urlSubtitle">(Works for 18 hours | <a href="javascript:clearCurrentData();" id=deletebtn>delete</a>)</div>';
 				if (html != $("url").innerHTML) {
 					$("url").innerHTML = html;
 				}
