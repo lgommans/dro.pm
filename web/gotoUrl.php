@@ -44,6 +44,11 @@ if ($status !== false) {
 				print("This link is valid until $validUntil and redirects to:\n" . $data);
 			}
 		}
+		else if (isset($_GET['download'])) {
+			header('Content-Type: text/plain');
+			header('Content-disposition: attachment; filename="link.url"');
+			print("[InternetShortcut]\r\nURL=$data");
+		}
 		else if (isset($_GET['preview'])) {
 			header('Content-Type: text/plain');
 			print($data);
@@ -63,13 +68,17 @@ if ($status !== false) {
 			$len = strlen($data);
 			header('Content-Type: text/plain');
 			if ($expireAfterDownload == '1') {
-				print("This link self-destructed because you viewed it. It would have been valid until $validUntil\n");
+				print("This link was a paste and self-destructed because you viewed it. It would have been valid until $validUntil\n");
 				print("It contained $len bytes of text data:\n" . $data);
 			}
 			else {
-				print("This link is valid until $validUntil and contains $len bytes of text data:\n" . $data);
+				print("This link is a paste, valid until $validUntil and contains $len bytes of text data:\n" . $data);
 			}
 			exit;
+		}
+		else if (isset($_GET['download'])) {
+			header('Content-Type: text/plain');
+			header('Content-disposition: attachment; filename="text.txt"');
 		}
 
 		print($data);
